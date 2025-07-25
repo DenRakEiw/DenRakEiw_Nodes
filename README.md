@@ -6,6 +6,9 @@ A custom node pack for ComfyUI that provides utility nodes for image generation 
 
 ### Color Generator Node
 
+![Screenshot 2025-07-25 175434](https://github.com/user-attachments/assets/ef53eb14-8e10-40df-9909-65825a425017)
+
+
 Generates solid color images based on predefined colors.
 
 **Features:**
