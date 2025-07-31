@@ -36,6 +36,8 @@ Generates solid color images based on predefined colors.
 ---
 
 ## 🔥 Flux LayerDiffuse Nodes
+![Screenshot 2025-07-31 130724](https://github.com/user-attachments/assets/7868b452-c64f-4e25-a476-8055981791b6)
+
 
 ### 🔧 Flux LayerDiffuse Standalone Loader
 Loads the TransparentVAE model for transparent image generation.
