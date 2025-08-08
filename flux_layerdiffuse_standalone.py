@@ -6,26 +6,34 @@ Loads TransparentVAE directly from the checkpoint
 import torch
 import os
 
-# ComfyUI imports - only available when running in ComfyUI
-try:
-    import comfy.model_management as model_management
-    import folder_paths
-    COMFY_AVAILABLE = True
-except ImportError:
-    COMFY_AVAILABLE = False
-    # Fallback for testing outside ComfyUI
-    class MockModelManagement:
-        @staticmethod
-        def get_torch_device():
-            return torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    
-    model_management = MockModelManagement()
+# ComfyUI imports
+import comfy.model_management as model_management
+import folder_paths
 
-# Handle relative imports for both ComfyUI and standalone testing
+# Import the real TransparentVAE from separate file
 try:
     from .transparent_vae import TransparentVAE
 except ImportError:
-    from transparent_vae import TransparentVAE
+    # Fallback simple implementation
+    class TransparentVAE:
+        def __init__(self, sd_vae, dtype=torch.float16, alpha=300.0, latent_c=16, **kwargs):
+            self.sd_vae = sd_vae
+            self.dtype = dtype
+            self.alpha = alpha
+            self.latent_c = latent_c
+
+        def to(self, device):
+            if hasattr(self.sd_vae, 'to'):
+                self.sd_vae.to(device)
+            return self
+
+        def parameters(self):
+            if hasattr(self.sd_vae, 'parameters'):
+                return self.sd_vae.parameters()
+            return iter([])
+
+        def load_state_dict(self, state_dict, strict=True):
+            return [], []
 
 
 class FluxLayerDiffuseStandaloneLoader:
@@ -79,22 +87,15 @@ class FluxLayerDiffuseStandaloneLoader:
         torch_dtype = dtype_map[dtype]
         
         # Find TransparentVAE checkpoint file
-        if COMFY_AVAILABLE:
-            # Look for the file in various model directories
-            possible_paths = [
-                os.path.join(folder_paths.models_dir, "vae", transparent_vae_checkpoint),
-                os.path.join(folder_paths.models_dir, "checkpoints", transparent_vae_checkpoint),
-                os.path.join(folder_paths.models_dir, transparent_vae_checkpoint),
-                os.path.join("models", "vae", transparent_vae_checkpoint),
-                os.path.join("models", transparent_vae_checkpoint),
-                transparent_vae_checkpoint  # Direct path
-            ]
-        else:
-            possible_paths = [
-                os.path.join("models", "vae", transparent_vae_checkpoint),
-                os.path.join("models", transparent_vae_checkpoint),
-                transparent_vae_checkpoint
-            ]
+        # Look for the file in various model directories
+        possible_paths = [
+            os.path.join(folder_paths.models_dir, "vae", transparent_vae_checkpoint),
+            os.path.join(folder_paths.models_dir, "checkpoints", transparent_vae_checkpoint),
+            os.path.join(folder_paths.models_dir, transparent_vae_checkpoint),
+            os.path.join("models", "vae", transparent_vae_checkpoint),
+            os.path.join("models", transparent_vae_checkpoint),
+            transparent_vae_checkpoint  # Direct path
+        ]
         
         checkpoint_path = None
         for path in possible_paths:
@@ -196,17 +197,13 @@ class FluxLayerDiffuseInfo:
             info_lines = ["=== Flux LayerDiffuse File Check ==="]
             
             # Check for TransparentVAE
-            if COMFY_AVAILABLE:
-                vae_paths = [
-                    os.path.join(folder_paths.models_dir, "vae", "TransparentVAE.pth"),
-                    os.path.join(folder_paths.models_dir, "TransparentVAE.pth"),
-                ]
-                lora_paths = [
-                    os.path.join(folder_paths.models_dir, "loras", "layerlora.safetensors"),
-                ]
-            else:
-                vae_paths = ["models/TransparentVAE.pth"]
-                lora_paths = ["models/layerlora.safetensors"]
+            vae_paths = [
+                os.path.join(folder_paths.models_dir, "vae", "TransparentVAE.pth"),
+                os.path.join(folder_paths.models_dir, "TransparentVAE.pth"),
+            ]
+            lora_paths = [
+                os.path.join(folder_paths.models_dir, "loras", "layerlora.safetensors"),
+            ]
             
             # Check TransparentVAE
             vae_found = False

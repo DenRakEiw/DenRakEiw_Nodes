@@ -194,8 +194,6 @@ class PreviewTransparentImage:
         return {
             "required": {
                 "images": ("IMAGE",),
-            },
-            "optional": {
                 "background_color": (["transparent", "white", "black", "checkerboard"], {
                     "default": "checkerboard"
                 }),
@@ -207,7 +205,7 @@ class PreviewTransparentImage:
     CATEGORY = "FluxLayerDiffuse"
     OUTPUT_NODE = True
 
-    def preview_transparent_images(self, images, background_color="checkerboard"):
+    def preview_transparent_images(self, images, background_color):
         """
         Preview transparent images with different backgrounds
         """
@@ -222,29 +220,29 @@ class PreviewTransparentImage:
                 raise ValueError(f"Unsupported image type: {type(images)}")
             
             print(f"Previewing transparent images: {images_np.shape}")
-            
+
             # Get temporary directory for preview
             if COMFY_AVAILABLE:
                 temp_dir = folder_paths.get_temp_directory()
             else:
                 temp_dir = "temp"
-            
+
             os.makedirs(temp_dir, exist_ok=True)
-            
+
             preview_paths = []
-            
+
             # Process each image
             for i, image_np in enumerate(images_np):
                 # Ensure image is in correct format [H, W, C]
                 if len(image_np.shape) == 4:
                     image_np = image_np[0]  # Remove batch dimension if present
-                
+
                 # Convert to 0-255 range if needed
                 if image_np.max() <= 1.0:
                     image_np = (image_np * 255).astype(np.uint8)
                 else:
                     image_np = image_np.astype(np.uint8)
-                
+
                 # Handle different channel counts
                 if image_np.shape[-1] == 4:
                     # RGBA
