@@ -1,5 +1,7 @@
 from .color_generator_node import ColorGeneratorNode
 from .load_image_sequence import LoadImageSequence, LoadImageSequenceInfo
+from .latent_colormatch import LatentColorMatch, LatentColorMatchSimple
+from .latent_adjust import LatentImageAdjust
 
 # Import Flux LayerDiffuse nodes
 try:
@@ -21,12 +23,18 @@ NODE_CLASS_MAPPINGS = {
     "ColorGeneratorNode": ColorGeneratorNode,
     "LoadImageSequence": LoadImageSequence,
     "LoadImageSequenceInfo": LoadImageSequenceInfo,
+    "LatentColorMatch": LatentColorMatch,
+    "LatentColorMatchSimple": LatentColorMatchSimple,
+    "LatentImageAdjust": LatentImageAdjust,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
     "ColorGeneratorNode": "Color Generator",
     "LoadImageSequence": "📁 Load Image Sequence",
     "LoadImageSequenceInfo": "📊 Load Image Sequence Info",
+    "LatentColorMatch": "🎨 Latent Color Match",
+    "LatentColorMatchSimple": "🎨 Latent Color Match (Simple)",
+    "LatentImageAdjust": "🎛️ Latent Image Adjust",
 }
 
 # Add Flux LayerDiffuse nodes if available

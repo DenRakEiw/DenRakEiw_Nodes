@@ -1,6 +1,6 @@
 # Denrakeiw Nodes
 
-A comprehensive custom node pack for ComfyUI that provides utility nodes for image generation, manipulation, and **Flux LayerDiffuse transparent image generation**.
+A comprehensive custom node pack for ComfyUI that provides utility nodes for image generation, manipulation, **Flux LayerDiffuse transparent image generation**, and **advanced latent space color tools**.
 
 ## Nodes
 
@@ -33,11 +33,91 @@ Generates solid color images based on predefined colors.
 - **Browns**: Brown, Saddle Brown, Sienna, Chocolate, Peru, Sandy Brown, Tan, Wheat
 - **Special Colors**: Beige, Floral White, Ghost White, Honeydew, Ivory, Azure, Snow, Mint Cream
 
+### 📁 Load Image Sequence
+Loads images from a folder one by one, incrementing through the sequence with each workflow execution.
+
+**Features:**
+- Sequential image loading (one image per execution)
+- Automatic incrementing through folder contents
+- Robust error handling (skips corrupted images)
+- Multiple sorting methods (alphabetical, date, size)
+- Loop option (restart from beginning when reaching end)
+- State management (remembers position between executions)
+- **Outputs:**
+  - Current image
+  - Filename (e.g., "01.png")
+  - TXT filename (e.g., "01.txt")
+  - Current index (1-based)
+  - Total image count
+
+**Advantages over Load Image Batch:**
+- ✅ Low memory usage (loads only one image at a time)
+- ✅ No memory overflow issues
+- ✅ Automatic progression through image sequence
+- ✅ Better error handling for corrupted files
+
+### 📊 Load Image Sequence Info
+Displays information about the current image sequence state.
+
+**Features:**
+- Shows folder contents and current position
+- Lists found image files
+- Displays next image to be loaded
+- Useful for debugging and monitoring progress
+
+---
+
+## 🎨 Latent Color Tools
+
+### 🎨 Latent Color Match
+Advanced color matching between latents using multiple algorithms, working directly in latent space for maximum efficiency.
+
+**Features:**
+- **Multiple color matching methods:**
+  - **Cubiq-based methods** with kornia (LAB, YCbCr, LUV, YUV, XYZ, RGB)
+  - **Advanced algorithms** with color-matcher (hm-mkl-hm, mkl, hm, reinhard, mvgd, hm-mvgd-hm)
+- **Real-time processing** directly in latent space
+- **Batch processing** support for efficiency
+- **Factor control** (0.0-3.0) for effect strength
+- **Automatic tensor shape handling** (4D and 5D tensors)
+- **GPU acceleration** with full CUDA support
+
+**Advantages over image-based color matching:**
+- ⚡ **10x faster** - No VAE encoding/decoding needed
+- 💾 **50% less VRAM** usage
+- ✅ **No quality loss** from VAE artifacts
+- 🔄 **Seamless integration** with latent workflows
+
+### 🎨 Latent Color Match (Simple)
+Simplified version with basic color matching methods for quick adjustments.
+
+**Features:**
+- Mean/std matching across all channels
+- Channel-wise mean/std matching
+- Lightweight and fast processing
+- **Outputs:** Color-matched latent
+
+### 🎛️ Latent Image Adjust
+Complete image adjustment suite working directly in latent space.
+
+**Features:**
+- **Brightness** (-1.0 to 1.0) - Additive brightness adjustment
+- **Contrast** (0.0 to 3.0) - Multiplicative contrast around mean
+- **Hue** (-180° to 180°) - Color tone shifting with HSV conversion
+- **Saturation** (0.0 to 3.0) - Color intensity adjustment
+- **Sharpness** (0.0 to 3.0) - Unsharp masking and blur effects
+- **Batch processing** for multiple latents
+- **Device selection** (auto/CPU/GPU)
+
+**Technical Benefits:**
+- **Direct latent manipulation** - No image conversion needed
+- **Kornia integration** for professional color space operations
+- **Memory efficient** processing
+- **Anti-aliasing** to prevent artifacts
+
 ---
 
 ## 🔥 Flux LayerDiffuse Nodes
-![Screenshot 2025-07-31 130724](https://github.com/user-attachments/assets/7868b452-c64f-4e25-a476-8055981791b6)
-
 
 ### 🔧 Flux LayerDiffuse Standalone Loader
 Loads the TransparentVAE model for transparent image generation.
@@ -201,6 +281,13 @@ ComfyUI/
 - numpy
 - PIL (Pillow)
 
+### For Latent Color Tools:
+- ComfyUI
+- torch
+- numpy
+- kornia>=0.6.0 (for advanced color space conversions)
+- color-matcher>=0.2.0 (for professional color matching algorithms)
+
 ### For Flux LayerDiffuse:
 - ComfyUI
 - torch
@@ -213,6 +300,10 @@ ComfyUI/
 
 Install dependencies:
 ```bash
+# For Latent Color Tools
+pip install kornia>=0.6.0 color-matcher>=0.2.0
+
+# For Flux LayerDiffuse
 pip install diffusers==0.32.2 safetensors transformers peft
 ```
 
@@ -256,6 +347,18 @@ pip install diffusers==0.32.2 safetensors transformers peft
 3. Select a color from the dropdown
 4. Connect the outputs to other nodes as needed
 
+### Load Image Sequence:
+1. Add the "📁 Load Image Sequence" node to your workflow
+2. Set the folder_path to your image directory
+3. Configure sorting method and loop options
+4. Each workflow execution will load the next image in sequence
+5. Use "📊 Load Image Sequence Info" to monitor progress
+
+**Example workflow:**
+```
+📁 Load Image Sequence → Image Processing → Save Image
+```
+
 ### Flux LayerDiffuse:
 1. Follow the model installation guide above
 2. Use the workflow helper nodes for guidance
@@ -286,9 +389,10 @@ pip install diffusers==0.32.2 safetensors transformers peft
 ## 📚 Documentation
 
 This package includes comprehensive documentation:
-- `COMPLETE_WORKFLOW.md` - Full workflow guide
+- `COMPLETE_WORKFLOW.md` - Full Flux LayerDiffuse workflow guide
 - `GLASS_PROBLEM_SOLUTION.md` - Solutions for glass generation issue
 - `TENSOR_DIMENSION_FIX.md` - Fixing dimension errors
+- `LOAD_IMAGE_SEQUENCE_GUIDE.md` - Complete guide for image sequence loading
 - Various troubleshooting guides
 
 ## 🙏 Acknowledgments

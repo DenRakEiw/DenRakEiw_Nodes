@@ -25,5 +25,9 @@ sentencepiece
 # torchvision    # Usually provided by ComfyUI
 # xformers       # For memory optimization (optional)
 
+# Latent Color Tools Dependencies
+kornia>=0.6.0
+color-matcher>=0.2.0
+
 # Note: If you encounter dependency conflicts with other packages,
 # you can try installing with --force-reinstall or create a separate environment
