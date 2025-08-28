@@ -47,14 +47,15 @@ class LatentColorMatch:
                 "factor": ("FLOAT", { "default": 1.0, "min": 0.0, "max": 3.0, "step": 0.05, }),
                 "device": (["auto", "cpu", "gpu"],),
                 "batch_size": ("INT", { "default": 0, "min": 0, "max": 1024, "step": 1, }),
+                "anti_aliasing": ("BOOLEAN", {"default": False}),
             }
         }
 
     RETURN_TYPES = ("LATENT",)
     FUNCTION = "execute"
-    CATEGORY = "latent/color"
+    CATEGORY = "denrakeiw/latent"
 
-    def execute(self, latent, reference, method, factor, device, batch_size):
+    def execute(self, latent, reference, method, factor, device, batch_size, anti_aliasing):
         print(f"=== LatentColorMatch Debug ===")
         print(f"Method: {method}")
         print(f"Factor: {factor}")
@@ -199,7 +200,15 @@ class LatentColorMatch:
         print(f"Average difference from original: {diff.item():.6f}")
         print(f"Final result shape: {matched_samples.shape}")
         print(f"Matched range: {matched_samples.min().item():.3f} to {matched_samples.max().item():.3f}")
-        
+
+        # Apply anti-aliasing if requested
+        if anti_aliasing:
+            print("Applying anti-aliasing smoothing filter...")
+            # Apply 3x3 average pooling with stride=1 and padding=1 to smooth the result
+            # This helps reduce raster artifacts and aliasing
+            matched_samples = F.avg_pool2d(matched_samples, kernel_size=3, stride=1, padding=1)
+            print(f"Anti-aliasing applied. New range: {matched_samples.min().item():.3f} to {matched_samples.max().item():.3f}")
+
         # Create output latent dict
         result = latent.copy()
         result["samples"] = matched_samples
@@ -509,14 +518,15 @@ class LatentColorMatchSimple:
                 "reference": ("LATENT",),
                 "method": (['mean_std', 'channel_wise'], {"default": 'mean_std'}),
                 "factor": ("FLOAT", { "default": 1.0, "min": 0.0, "max": 2.0, "step": 0.05, }),
+                "anti_aliasing": ("BOOLEAN", {"default": False}),
             }
         }
 
     RETURN_TYPES = ("LATENT",)
     FUNCTION = "execute"
-    CATEGORY = "latent/color"
+    CATEGORY = "denrakeiw/latent"
 
-    def execute(self, latent, reference, method, factor):
+    def execute(self, latent, reference, method, factor, anti_aliasing):
         latent_samples = latent["samples"]
         reference_samples = reference["samples"]
 
@@ -537,6 +547,14 @@ class LatentColorMatchSimple:
 
         # Apply factor
         result_samples = factor * matched + (1 - factor) * latent_samples
+
+        # Apply anti-aliasing if requested
+        if anti_aliasing:
+            print("Applying anti-aliasing smoothing filter...")
+            # Apply 3x3 average pooling with stride=1 and padding=1 to smooth the result
+            # This helps reduce raster artifacts and aliasing
+            result_samples = F.avg_pool2d(result_samples, kernel_size=3, stride=1, padding=1)
+            print(f"Anti-aliasing applied. New range: {result_samples.min().item():.3f} to {result_samples.max().item():.3f}")
 
         result = latent.copy()
         result["samples"] = result_samples

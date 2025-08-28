@@ -71,7 +71,7 @@ class FluxLayerDiffuseStandaloneLoader:
     RETURN_TYPES = ("TRANSPARENT_VAE",)
     RETURN_NAMES = ("transparent_vae",)
     FUNCTION = "load_standalone_transparent_vae"
-    CATEGORY = "FluxLayerDiffuse"
+    CATEGORY = "denrakeiw/flux"
 
     def load_standalone_transparent_vae(self, vae, transparent_vae_checkpoint, alpha, latent_channels, dtype):
         """
@@ -186,7 +186,7 @@ class FluxLayerDiffuseInfo:
     RETURN_TYPES = ("STRING",)
     RETURN_NAMES = ("info",)
     FUNCTION = "get_info"
-    CATEGORY = "FluxLayerDiffuse"
+    CATEGORY = "denrakeiw/flux"
     
     def get_info(self, action):
         """

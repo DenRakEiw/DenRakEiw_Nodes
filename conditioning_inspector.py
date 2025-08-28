@@ -21,7 +21,7 @@ class ConditioningInspector:
     RETURN_TYPES = ("CONDITIONING", "STRING")
     RETURN_NAMES = ("conditioning", "info")
     FUNCTION = "inspect_conditioning"
-    CATEGORY = "FluxLayerDiffuse"
+    CATEGORY = "denrakeiw/flux"
 
     def inspect_conditioning(self, conditioning):
         """

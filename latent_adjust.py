@@ -37,7 +37,7 @@ class LatentImageAdjust:
 
     RETURN_TYPES = ("LATENT",)
     FUNCTION = "execute"
-    CATEGORY = "latent/adjust"
+    CATEGORY = "denrakeiw/latent"
 
     def execute(self, latent, hue, saturation, brightness, contrast, sharpness, device, batch_size):
         print(f"=== LatentImageAdjust Debug ===")

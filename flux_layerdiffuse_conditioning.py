@@ -32,7 +32,7 @@ class FluxLayerDiffuseConditioningFix:
     RETURN_TYPES = ("CONDITIONING",)
     RETURN_NAMES = ("fixed_conditioning",)
     FUNCTION = "fix_conditioning"
-    CATEGORY = "FluxLayerDiffuse"
+    CATEGORY = "denrakeiw/flux"
 
     def fix_conditioning(self, conditioning, target_length):
         """
@@ -121,7 +121,7 @@ class FluxLayerDiffuseEmptyConditioning:
     RETURN_TYPES = ("CONDITIONING",)
     RETURN_NAMES = ("empty_conditioning",)
     FUNCTION = "create_empty_conditioning"
-    CATEGORY = "FluxLayerDiffuse"
+    CATEGORY = "denrakeiw/flux"
 
     def create_empty_conditioning(self, clip, batch_size, sequence_length):
         """

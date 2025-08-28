@@ -42,7 +42,7 @@ class SaveTransparentImage:
 
     RETURN_TYPES = ()
     FUNCTION = "save_transparent_images"
-    CATEGORY = "FluxLayerDiffuse"
+    CATEGORY = "denrakeiw/flux"
     OUTPUT_NODE = True
 
     def save_transparent_images(self, images, filename_prefix, save_metadata=True):
@@ -202,7 +202,7 @@ class PreviewTransparentImage:
 
     RETURN_TYPES = ()
     FUNCTION = "preview_transparent_images"
-    CATEGORY = "FluxLayerDiffuse"
+    CATEGORY = "denrakeiw/flux"
     OUTPUT_NODE = True
 
     def preview_transparent_images(self, images, background_color):
@@ -380,7 +380,7 @@ class TransparentImageInfo:
     RETURN_TYPES = ("STRING",)
     RETURN_NAMES = ("info",)
     FUNCTION = "analyze_transparent_images"
-    CATEGORY = "FluxLayerDiffuse"
+    CATEGORY = "denrakeiw/flux"
 
     def analyze_transparent_images(self, images):
         """

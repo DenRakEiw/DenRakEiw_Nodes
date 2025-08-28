@@ -32,7 +32,7 @@ class FluxLayerDiffuseDecoderSimple:
     RETURN_TYPES = ("IMAGE",)
     RETURN_NAMES = ("transparent_image",)
     FUNCTION = "decode_transparent"
-    CATEGORY = "FluxLayerDiffuse"
+    CATEGORY = "denrakeiw/flux"
 
     def decode_transparent(self, transparent_vae, samples, use_augmentation, **kwargs):
         """

@@ -1,0 +1,18 @@
+{
+  "input_channels": 4,
+  "output_channels": 4,
+  "num_residual_blocks": 8,
+  "epochs": 200,
+  "batch_size": 16,
+  "learning_rate": 0.0001,
+  "weight_decay": 0.0001,
+  "dataset_size": 2000,
+  "num_workers": 4,
+  "mse_weight": 0.7,
+  "perceptual_weight": 0.3,
+  "scheduler_type": "cosine",
+  "min_lr": 1e-06,
+  "save_every": 10,
+  "validate_every": 1,
+  "timestamp": "2025-08-14T15:30:01.488409"
+}
