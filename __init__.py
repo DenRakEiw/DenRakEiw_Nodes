@@ -46,7 +46,7 @@ except ImportError as e:
     print(f"✗ UTF8CaptionSaver failed: {e}")
     UTF8CaptionSaver = None
 
-# Import Universal Latent Upscaler
+# Import Universal Latent Upscaler (custom DenRakEiw V2.0 upscaler)
 try:
     from .wan_nn_latent_upscaler import WanNNLatentUpscalerNode
     WAN_NN_AVAILABLE = True
@@ -55,6 +55,17 @@ except ImportError as e:
     WAN_NN_AVAILABLE = False
     WanNNLatentUpscalerNode = None
     print(f"⚠ Universal Latent Upscaler not available: {e}")
+
+# Import Universal NN Latent Upscaler (from WAN_NN_Latent_Upscale repo - Ttl based)
+# Registered with _DRE suffix to avoid conflicts with the standalone pack.
+try:
+    from .nn_upscale import UniversalNNLatentUpscale
+    UNIVERSAL_NN_UPSCALE_AVAILABLE = True
+    print("✓ Universal NN Latent Upscale (WAN_NN_Latent_Upscale) loaded successfully")
+except ImportError as e:
+    UNIVERSAL_NN_UPSCALE_AVAILABLE = False
+    UniversalNNLatentUpscale = None
+    print(f"⚠ Universal NN Latent Upscale (WAN_NN_Latent_Upscale) not available: {e}")
 
 # Import Flux LayerDiffuse nodes
 try:
@@ -109,16 +120,16 @@ if LoadImageSequenceInfo is not None:
     NODE_DISPLAY_NAME_MAPPINGS["LoadImageSequenceInfo"] = "📊 Load Image Sequence Info"
 
 if LatentColorMatch is not None:
-    NODE_CLASS_MAPPINGS["LatentColorMatch"] = LatentColorMatch
-    NODE_DISPLAY_NAME_MAPPINGS["LatentColorMatch"] = "🎨 Latent Color Match"
+    NODE_CLASS_MAPPINGS["LatentColorMatch_DRE"] = LatentColorMatch
+    NODE_DISPLAY_NAME_MAPPINGS["LatentColorMatch_DRE"] = "🎨 Latent Color Match *DRE"
 
 if LatentColorMatchSimple is not None:
-    NODE_CLASS_MAPPINGS["LatentColorMatchSimple"] = LatentColorMatchSimple
-    NODE_DISPLAY_NAME_MAPPINGS["LatentColorMatchSimple"] = "🎨 Latent Color Match (Simple)"
+    NODE_CLASS_MAPPINGS["LatentColorMatchSimple_DRE"] = LatentColorMatchSimple
+    NODE_DISPLAY_NAME_MAPPINGS["LatentColorMatchSimple_DRE"] = "🎨 Latent Color Match (Simple) *DRE"
 
 if LatentImageAdjust is not None:
-    NODE_CLASS_MAPPINGS["LatentImageAdjust"] = LatentImageAdjust
-    NODE_DISPLAY_NAME_MAPPINGS["LatentImageAdjust"] = "🎛️ Latent Image Adjust"
+    NODE_CLASS_MAPPINGS["LatentImageAdjust_DRE"] = LatentImageAdjust
+    NODE_DISPLAY_NAME_MAPPINGS["LatentImageAdjust_DRE"] = "🎛️ Latent Image Adjust *DRE"
 
 if MultiImageAspectRatioComposer is not None:
     NODE_CLASS_MAPPINGS["MultiImageAspectRatioComposer"] = MultiImageAspectRatioComposer
@@ -128,10 +139,16 @@ if UTF8CaptionSaver is not None:
     NODE_CLASS_MAPPINGS["UTF8CaptionSaver"] = UTF8CaptionSaver
     NODE_DISPLAY_NAME_MAPPINGS["UTF8CaptionSaver"] = "📝 UTF-8 Caption Saver"
 
-# Add Universal Latent Upscaler if available
+# Add Universal Latent Upscaler if available (custom DenRakEiw V2.0)
 if WAN_NN_AVAILABLE and WanNNLatentUpscalerNode is not None:
     NODE_CLASS_MAPPINGS["WanNNLatentUpscaler"] = WanNNLatentUpscalerNode
     NODE_DISPLAY_NAME_MAPPINGS["WanNNLatentUpscaler"] = "Universal Latent Upscaler"
+
+# Add Universal NN Latent Upscale (from WAN_NN_Latent_Upscale repo) if available
+# _DRE suffix avoids conflict with the standalone WAN_NN_Latent_Upscale pack.
+if UNIVERSAL_NN_UPSCALE_AVAILABLE and UniversalNNLatentUpscale is not None:
+    NODE_CLASS_MAPPINGS["UniversalNNLatentUpscale_DRE"] = UniversalNNLatentUpscale
+    NODE_DISPLAY_NAME_MAPPINGS["UniversalNNLatentUpscale_DRE"] = "🚀 Universal NN Latent Upscale *DRE"
 
 # Add Flux LayerDiffuse nodes if available
 if FLUX_LAYERDIFFUSE_AVAILABLE:

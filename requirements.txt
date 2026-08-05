@@ -30,5 +30,9 @@ pytz  # For timezone support in SaveTextNode
 kornia>=0.6.0
 color-matcher>=0.2.0
 
+# Universal NN Latent Upscale (from WAN_NN_Latent_Upscale repo)
+# Only needs torch/torchvision/numpy/pillow, all already provided by ComfyUI.
+# Model files (.pt) are bundled in the models/ folder.
+
 # Note: If you encounter dependency conflicts with other packages,
 # you can try installing with --force-reinstall or create a separate environment

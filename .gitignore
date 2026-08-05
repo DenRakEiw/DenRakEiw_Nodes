@@ -1,7 +1,11 @@
 __pycache__/
 *.pyc
 logs/
-models/
+models/*
+!models/sd15_resizer.pt
+!models/sdxl_resizer.pt
+!models/flux_resizer.pt
+!models/wan2.2_resizer_best.pt
 plots/
 validation_output/
 wan_vae_models/

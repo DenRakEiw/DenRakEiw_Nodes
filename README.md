@@ -40,19 +40,33 @@ Optimizes layout based on target aspect ratio:
 
 ## 🎨 Latent Space Tools
 
-### 🎨 Latent Color Match
+> ℹ️ The latent nodes below are also available as standalone packs
+> ([Latent_Nodes](https://github.com/DenRakEiw/Latent_Nodes) and
+> [WAN_NN_Latent_Upscale](https://github.com/DenRakEiw/WAN_NN_Latent_Upscale)).
+> To allow both packs to coexist in one ComfyUI install without node-ID conflicts,
+> the integrated versions here use an internal `_DRE` suffix and a `*DRE` tag in
+> the display name (e.g. `🎨 Latent Color Match *DRE`).
+
+### 🎨 Latent Color Match *DRE
 Advanced color matching directly in latent space - **10x faster** than image-based methods.
 - **Methods**: LAB, YCbCr, LUV, YUV, XYZ, RGB (kornia) + advanced algorithms (color-matcher)
 - **Benefits**: No VAE encoding/decoding, 50% less VRAM, no quality loss
 - **Controls**: Factor strength (0.0-3.0), batch processing, GPU acceleration
 
-### 🎛️ Latent Image Adjust
+### 🎛️ Latent Image Adjust *DRE
 Complete adjustment suite in latent space with kornia integration.
-- **Controls**: Brightness (-1.0 to 1.0), Contrast (0.0-3.0), Hue (±180°), Saturation (0.0-3.0), Sharpness (0.0-3.0)
+- **Controls**: Brightness (-1.0 to 1.0), Contrast (0.0 to 3.0), Hue (±180°), Saturation (0.0-3.0), Sharpness (0.0-3.0)
 - **Features**: Direct latent manipulation, memory efficient, anti-aliasing
 
+### 🚀 Universal NN Latent Upscale *DRE
+Neural network-based latent upscaling (from the WAN_NN_Latent_Upscale repo, based on
+[Ttl's ComfyUi_NNLatentUpscale](https://github.com/Ttl/ComfyUi_NNLatentUpscale)).
+- **Models**: SD1.5, SDXL, Flux, and Wan2.2 (bundled `.pt` files in `models/`)
+- **Scale**: Configurable 1.0x–2.0x, automatic model detection/loading
+- **Performance**: Direct latent processing without VAE decode/encode cycles
+
 ### Universal Latent Upscaler
-Neural network-based latent upscaling for SD1.5, SDXL, Flux, and Wan2.2 models.
+Neural network-based latent upscaling (custom DenRakEiw V2.0 auto-detecting 4ch/16ch).
 - **Models**: Supports multiple architectures with automatic detection
 - **Performance**: Direct latent processing without VAE decode/encode cycles
 
