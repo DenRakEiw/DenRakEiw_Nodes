@@ -80,6 +80,16 @@ except ImportError as e:
     print(f"⚠ Flux LayerDiffuse nodes not available: {e}")
     print("Install required dependencies: pip install diffusers==0.32.2 safetensors transformers peft")
 
+# Import LLM Deforum Generator
+try:
+    from .llm_deforum import LLMDeforumGenerator
+    LLM_DEFORUM_AVAILABLE = True
+    print("✓ LLM Deforum Generator loaded successfully")
+except ImportError as e:
+    LLM_DEFORUM_AVAILABLE = False
+    LLMDeforumGenerator = None
+    print(f"⚠ LLM Deforum Generator not available: {e}")
+
 # Import Flux 3 API nodes
 try:
     from .flux3_nodes import NODE_CLASS_MAPPINGS as FLUX3_MAPPINGS
@@ -170,6 +180,11 @@ if FLUX_LAYERDIFFUSE_AVAILABLE:
     if TransparentImageInfo is not None:
         NODE_CLASS_MAPPINGS["TransparentImageInfo"] = TransparentImageInfo
         NODE_DISPLAY_NAME_MAPPINGS["TransparentImageInfo"] = "📊 Transparent Image Info"
+
+# Add LLM Deforum Generator if available
+if LLM_DEFORUM_AVAILABLE and LLMDeforumGenerator is not None:
+    NODE_CLASS_MAPPINGS["LLMDeforumGenerator"] = LLMDeforumGenerator
+    NODE_DISPLAY_NAME_MAPPINGS["LLMDeforumGenerator"] = "🤖 LLM Deforum (WIP)"
 
 # Add Flux 3 API nodes if available
 if FLUX3_AVAILABLE:
