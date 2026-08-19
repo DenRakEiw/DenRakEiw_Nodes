@@ -9,4 +9,3 @@ models/*
 plots/
 validation_output/
 wan_vae_models/
-web/
