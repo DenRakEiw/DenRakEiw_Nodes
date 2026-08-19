@@ -208,6 +208,19 @@ if FLUX3_AVAILABLE:
     NODE_CLASS_MAPPINGS.update(FLUX3_MAPPINGS)
     NODE_DISPLAY_NAME_MAPPINGS.update(FLUX3_DISPLAY)
 
+# Import ComfyGotchi wrapper (requires comfygotchi custom node to be installed)
+try:
+    from .comfygotchi_dre import NODE_CLASS_MAPPINGS as GOTCHI_MAPPINGS
+    from .comfygotchi_dre import NODE_DISPLAY_NAME_MAPPINGS as GOTCHI_DISPLAY
+    NODE_CLASS_MAPPINGS.update(GOTCHI_MAPPINGS)
+    NODE_DISPLAY_NAME_MAPPINGS.update(GOTCHI_DISPLAY)
+    if GOTCHI_MAPPINGS:
+        print("✓ ComfyGotchi *DRE wrapper loaded successfully")
+    else:
+        print("⚠ ComfyGotchi *DRE: comfygotchi package not found, node skipped")
+except Exception as e:
+    print(f"⚠ ComfyGotchi *DRE not available: {e}")
+
 print(f"✓ denrakeiw_nodes loaded {len(NODE_CLASS_MAPPINGS)} nodes successfully")
 
 # Export for ComfyUI
