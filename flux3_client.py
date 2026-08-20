@@ -42,6 +42,28 @@ SAFETY_TOLERANCE_MIN = 0
 SAFETY_TOLERANCE_MAX = 4
 MAX_KEYFRAMES = 10
 
+# --- Video Upscale endpoint (released) --------------------------------------
+# POST https://api.bfl.ai/v1/flux-tools/video-upscale-v1
+# Super-resolution for short clips (max 20 s, 50 MB). Two modes: precise
+# (creativity: 0) preserves identity, creative (creativity: 1, default) enhances
+# detail more aggressively. Output capped at ~14.4 MP per frame. Source audio is
+# preserved. Spec: https://docs.bfl.ai/api-reference/utility/video-upscale-v1
+UPSCALE_ENDPOINT_PATH = "v1/flux-tools/video-upscale-v1"
+UPSCALE_FACTOR_MIN = 1.5
+UPSCALE_FACTOR_MAX = 3.0
+UPSCALE_FACTOR_DEFAULT = 2.0
+UPSCALE_CREATIVITY_MODES = ["precise", "creative"]  # 0 / 1
+UPSCALE_VIDEO_MAX_SECONDS = 20
+UPSCALE_VIDEO_MAX_MB = 50
+
+# Target resolutions the node offers as a friendlier alternative to a raw
+# upscale_factor. We compute the factor from the source short side so the
+# output lands at ~target_short pixels on the short edge, preserving the
+# source aspect ratio. Matches the short-side convention BFL uses in their
+# pricing table (1080p = 1920x1080, 2K = 2560x1440, 4K = 3840x2160).
+UPSCALE_TARGETS = ["1080p", "2K", "4K"]
+UPSCALE_TARGET_SHORT_SIDE = {"1080p": 1080, "2K": 1440, "4K": 2160}
+
 # --- Image endpoint (PRE-RELEASE, undocumented) -------------------------------
 # The image API is not in the public docs yet (flux_3/flux3_image says
 # "Endpoint slugs and pricing are TBA until launch"). On dev we keep the
@@ -153,6 +175,37 @@ def bytes_to_image_tensor(data: bytes) -> torch.Tensor:
 
 # --------------------------------------------------------------------------- api
 
+def _parse_poll_response(resp, task_id: str) -> dict:
+    """Parse a get_result polling response, surfacing task failures correctly.
+
+    BFL's get_result returns a JSON polling-response body even for failed tasks
+    — e.g. HTTP 422 with {"status":"Error","details":{"error":"..."}}. Calling
+    raise_for_status() before parsing would discard that body and misclassify a
+    terminal task failure as a transient network error (10 futile retries,
+    then a confusing "network error"). Parse first; only fall back to
+    raise_for_status() when the body isn't JSON (a genuine transport/server
+    problem that is worth retrying).
+    """
+    try:
+        data = resp.json()
+    except ValueError:
+        # Non-JSON body (HTML error page, proxy error) = transport/server
+        # problem. raise_for_status classifies it for retry handling.
+        resp.raise_for_status()
+        raise
+    # Body parsed but no `status` field on a 4xx (except 429) = a validation
+    # error body (e.g. FastAPI's {"detail":[...]}), not a polling response.
+    # Surface it instead of polling forever on a terminal rejection.
+    if (400 <= resp.status_code < 500 and resp.status_code != 429
+            and "status" not in data):
+        raise RuntimeError(
+            f"Flux3: Polling von Task {task_id} abgelehnt (HTTP "
+            f"{resp.status_code}): "
+            f"{json.dumps(data, ensure_ascii=False)[:1000]}"
+        )
+    return data
+
+
 class Flux3Client:
     def __init__(self, api_key: str = "", base_url: str = ""):
         self.api_key = get_api_key(api_key)
@@ -223,6 +276,39 @@ class Flux3Client:
         log.info("Flux3: task %s submitted (cost: %s credits)", data.get("id"), cost)
         return data
 
+    def submit_upscale(self, payload: dict) -> dict:
+        """Submit a video-upscale task to POST /v1/flux-tools/video-upscale-v1.
+
+        Same task/polling_url shape as submit(), so poll_async() and download()
+        work unchanged. The BFL upscale endpoint does not return a `cost` field
+        on submit; pricing is per megapixel-second of delivered output.
+        """
+        url = f"{self.base_url}/{UPSCALE_ENDPOINT_PATH}"
+        size_mb = len(json.dumps(payload).encode()) / (1024 * 1024)
+        if size_mb > 1:
+            log.info("Flux3: sende %.1f MB an %s", size_mb, UPSCALE_ENDPOINT_PATH)
+
+        resp = self.session.post(url, json=payload, timeout=300)
+
+        if resp.status_code in (401, 403):
+            raise RuntimeError(f"Flux3: API-Key ungültig oder fehlt (HTTP {resp.status_code}).")
+        if not resp.ok:
+            # The body says WHY (bad base64, clip >20s, payload >50MB, moderation, ...).
+            detail = resp.text[:1000] if resp.text else "(kein Fehlertext)"
+            hint = ""
+            if resp.status_code in (400, 413) and size_mb > 5:
+                hint = (f" Der Request war {size_mb:.1f} MB groß — vermutlich ist "
+                        f"input_video zu groß (max {UPSCALE_VIDEO_MAX_MB} MB, "
+                        f"{UPSCALE_VIDEO_MAX_SECONDS} s).")
+            raise RuntimeError(
+                f"Flux3: API lehnt den Upscale-Request ab (HTTP {resp.status_code}): "
+                f"{detail}{hint}"
+            )
+
+        data = resp.json()
+        log.info("Flux3: upscale task %s submitted", data.get("id"))
+        return data
+
 
     def poll(self, task: dict, timeout: float = 900.0, interval: float = 2.0) -> Any:
         polling_url = task["polling_url"]
@@ -232,8 +318,7 @@ class Flux3Client:
 
         while True:
             resp = self.session.get(polling_url, timeout=60)
-            resp.raise_for_status()
-            data = resp.json()
+            data = _parse_poll_response(resp, task_id)
             status = data.get("status")
 
             if status != last_status:
@@ -274,8 +359,7 @@ class Flux3Client:
         while True:
             def _fetch():
                 resp = self.session.get(polling_url, timeout=60)
-                resp.raise_for_status()
-                return resp.json()
+                return _parse_poll_response(resp, task_id)
 
             try:
                 data = await asyncio.to_thread(_fetch)
@@ -374,10 +458,23 @@ def _describe_blob(value: Any) -> str:
 
 
 def format_metadata(payload: dict, result: Any, task: dict,
-                    image_model: str = "") -> str:
-    """Full, untruncated dump of everything about a run - for a Show Any node."""
+                    image_model: str = "",
+                    endpoint_path: str = "",
+                    header_override: str = "") -> str:
+    """Full, untruncated dump of everything about a run - for a Show Any node.
+
+    image_model: when set, render the header/endpoint for the (pre-release)
+    image endpoint instead of the documented video endpoint.
+    endpoint_path / header_override: when set, override header and endpoint
+    line for a non-default endpoint (e.g. the video-upscale tool). Used by
+    Flux3VideoUpscale so its metadata is labelled correctly. Takes precedence
+    over image_model.
+    """
     result = result if isinstance(result, dict) else {}
-    if image_model:
+    if endpoint_path:
+        header = header_override or "=== FLUX 3 ==="
+        path = endpoint_path
+    elif image_model:
         path = f"v1/{IMAGE_ENDPOINTS.get(image_model, {}).get('path', image_model)}"
         header = "=== FLUX 3 IMAGE (pre-release) ==="
     else:

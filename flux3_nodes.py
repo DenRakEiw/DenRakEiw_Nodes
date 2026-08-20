@@ -4,10 +4,10 @@ Flux3Video — documented endpoint POST /v1/flux-3-video, four modes
 (t2v / i2v / v2v / draft_enhance).
 Spec: https://docs.bfl.ai/api-reference/utility/generate-a-video-with-flux-3
 
-Flux3Image — PRE-RELEASE: the image API is not documented yet
-(https://docs.bfl.ai/flux_3/flux3_image says "Endpoint slugs and pricing are TBA
-until launch"). This node talks to the probed flux-3-large/distilled/small
-endpoints so it's ready when BFL flips the switch. Lives on the dev branch only.
+Flux3VideoUpscale — documented endpoint POST /v1/flux-tools/video-upscale-v1,
+super-resolution for short clips (≤20s, ≤50MB) with a precise and a creative
+mode. Output capped at ~14.4 MP per frame; source audio preserved.
+Spec: https://docs.bfl.ai/api-reference/utility/video-upscale-v1
 
 Flux3Prompter — LLM-powered prompt generator (OpenRouter) that turns a vague
 idea into a structured FLUX 3 prompt, guided by a prompting skill.
@@ -28,19 +28,22 @@ from .flux3_client import (
     DURATION_MAX,
     DURATION_MIN,
     DURATIONS,
-    IMAGE_ASPECT_RATIOS,
-    IMAGE_MODELS,
-    IMAGE_SIZES,
     MAX_KEYFRAMES,
-    MAX_SEED,
     RESOLUTIONS,
     SAFETY_TOLERANCE_DEFAULT,
     SAFETY_TOLERANCE_MAX,
     SAFETY_TOLERANCE_MIN,
+    UPSCALE_CREATIVITY_MODES,
+    UPSCALE_ENDPOINT_PATH,
+    UPSCALE_FACTOR_MAX,
+    UPSCALE_FACTOR_MIN,
+    UPSCALE_TARGETS,
+    UPSCALE_TARGET_SHORT_SIDE,
+    UPSCALE_VIDEO_MAX_MB,
+    UPSCALE_VIDEO_MAX_SECONDS,
     VIDEO_MODES,
     Flux3Client,
     batch_to_base64,
-    bytes_to_image_tensor,
     extract_url,
     format_metadata,
     tensor_to_base64,
@@ -63,17 +66,13 @@ CATEGORY = "Flux3 API"
 
 
 async def _run(client: Flux3Client, payload: dict,
-               timeout_minutes: int = DEFAULT_TIMEOUT_MINUTES,
-               image_model: str = "") -> tuple[dict, dict, bytes]:
+               timeout_minutes: int = DEFAULT_TIMEOUT_MINUTES) -> tuple[dict, dict, bytes]:
     """Submit, poll and download without blocking the executor.
 
     Every step is either awaited or pushed onto a thread, so ComfyUI can run other
     Flux nodes in the same graph concurrently instead of one after another.
-
-    image_model: when set, submit to that pre-release image endpoint instead of the
-    documented video endpoint.
     """
-    task = await asyncio.to_thread(client.submit, payload, image_model)
+    task = await asyncio.to_thread(client.submit, payload)
     result = await client.poll_async(task, timeout=timeout_minutes * 60)
     data = await asyncio.to_thread(client.download, extract_url(result))
     return task, result, data
@@ -328,105 +327,190 @@ class Flux3Video:
                 format_metadata(payload, result, task))
 
 
-class Flux3Image:
-    """Text-to-image (t2i) and multi-reference edit (i2i).
+# ===========================================================================
+# Flux3VideoUpscale — super-resolution for short clips (video-upscale-v1)
+# ===========================================================================
 
-    PRE-RELEASE: the image API isn't documented yet (docs say slugs/pricing are
-    TBA until launch). This node uses the probed flux-3-large/distilled/small
-    endpoints. Lives on the dev branch only; not shipped on main.
+class Flux3VideoUpscale:
+    """FLUX Video Upscale — super-resolution for short clips.
+
+    POST /v1/flux-tools/video-upscale-v1. Source clip max 20 s / 50 MB; output
+    capped at ~14.4 MP per frame (very large sources get upscaled by less than
+    the requested factor). The source audio track is preserved.
+
+    Two modes via `creativity`:
+      - precise (0): preserves the source exactly and sharpens it. Use when
+        identity matters (faces, products, brand assets, real people).
+      - creative (1, default): restores/invents fine detail more aggressively.
+        Good for generated footage, textures, crowds, scenery. Does not strictly
+        preserve identity — faces/products can drift.
+
+    Spec: https://docs.bfl.ai/api-reference/utility/video-upscale-v1
     """
 
     @classmethod
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "model": (IMAGE_MODELS, {
-                    "default": "flux-3-large",
-                    "tooltip": "large = volle Qualität · distilled = schnell · "
-                               "small = klein/günstig (gleiches Schema). Pre-release; "
-                               "Slug kann sich zum Launch noch ändern."}),
-                "prompt": ("STRING", {"multiline": True, "default": ""}),
-                "negative_prompt": ("STRING", {
-                    "multiline": True, "default": "",
-                    "tooltip": "Optional; Feld wird nur gesendet, wenn nicht leer."}),
-                # Capped at 2^32-1: the documented video endpoint rejects anything
-                # above that, and ComfyUI's "randomize" would otherwise produce a
-                # failing seed nearly every run. Safe for the image endpoints too.
-                "seed": ("INT", {"default": 0, "min": 0, "max": MAX_SEED,
-                                 "tooltip": "0 = zufällig (Feld wird nicht gesendet)."}),
-                "steps": ("INT", {"default": 0, "min": 0, "max": 50,
-                                  "tooltip": "1-50. 0 = API-Default verwenden"}),
-                "guidance": ("FLOAT", {"default": 0.0, "min": 0.0, "max": 100.0, "step": 0.1,
-                                       "tooltip": "0 = API-Default verwenden"}),
-                "prompt_upsampling": ("BOOLEAN", {"default": False}),
-                "aspect_ratio": (IMAGE_ASPECT_RATIOS, {"default": "16:9"}),
-                "image_size": (IMAGE_SIZES, {
-                    "default": "1024sq",
-                    "tooltip": "Größe als Quadrat-Äquivalent; aspect_ratio bestimmt die Form."}),
+                "video": ("VIDEO", {
+                    "tooltip": "Der Clip, der upgescalet wird (mp4). Max "
+                               f"{UPSCALE_VIDEO_MAX_SECONDS} s und "
+                               f"{UPSCALE_VIDEO_MAX_MB} MB. Alternativ "
+                               "input_video_url verwenden."}),
+                "target_resolution": (UPSCALE_TARGETS, {
+                    "default": "4K",
+                    "tooltip": "Ziel-Auflösung (Short Side). Die Node misst die "
+                               "Source-Dimension und berechnet den upscale_factor "
+                               "daraus (Faktor = target_short / min(w, h), "
+                               "auf 1.5–3.0 begrenzt). Erhält das Seitenverhältnis "
+                               "der Quelle. 1080p ≈ 1920×1080, 2K ≈ 2560×1440, "
+                               "4K ≈ 3840×2160 (jeweils 16:9)."}),
+                "creativity": (UPSCALE_CREATIVITY_MODES, {
+                    "default": "creative",
+                    "tooltip": "precise (0) = identitätserhaltend, scharf — für "
+                               "Gesichter/Produkte/echte Menschen. "
+                               "creative (1, default) = erfindet Detail, gut für "
+                               "generierte Footage/Landschaften/Texturen; "
+                               "Gesichter/Produkte können driften."}),
             },
             "optional": {
-                "images": ("IMAGE", {"tooltip": "Angeschlossen = i2i (Edit/Remix). "
-                                                "Bis zu 4 Bilder aus einem Batch."}),
-                "alpha": ("FLOAT", {
-                    "default": -1.0, "min": -1.0, "max": 100.0, "step": 0.01,
-                    "tooltip": "Undokumentierter Parameter der API (float). "
-                               "-1 = nicht senden / API-Default."}),
-                "conditioning_noise": ("FLOAT", {
-                    "default": -1.0, "min": -1.0, "max": 10.0, "step": 0.01,
-                    "tooltip": "Nur i2i (images angeschlossen): Rauschen auf dem "
-                               "Eingangsbild (>= 0). -1 = nicht senden / API-Default."}),
+                "input_video_url": ("STRING", {
+                    "default": "",
+                    "tooltip": "Alternative: HTTP(S)-URL zur Quelle statt "
+                               "video-Input. Hat Vorrang vor dem video-Input; "
+                               "erspart das Base64-Encoding eines großen Clips. "
+                               "Die Node streamt nur den moov-Atom der URL, um "
+                               "die Source-Dimension zu messen — kein Full-Download."}),
+                "prompt": ("STRING", {
+                    "multiline": True, "default": "",
+                    "tooltip": "Optional Beschreibung des Clips, lenkt das "
+                               "enhanced Detail (vor allem im creative-Modus). "
+                               "Leer = neutraler Upscale."}),
+                "safety_tolerance": ("INT", {
+                    "default": SAFETY_TOLERANCE_DEFAULT,
+                    "min": SAFETY_TOLERANCE_MIN, "max": SAFETY_TOLERANCE_MAX,
+                    "tooltip": "0 (strengste) bis 4, Default 2. Moderation für "
+                               "Prompt und ausgelieferte Frames."}),
                 "timeout_minutes": ("INT", {
                     "default": DEFAULT_TIMEOUT_MINUTES, "min": 1, "max": 240,
-                    "tooltip": "Wie lange die Node auf das Ergebnis wartet."}),
+                    "tooltip": "Wie lange die Node auf das Ergebnis wartet. "
+                               "Upscale kann ähnlich lange wie eine Video-"
+                               "Generierung brauchen."}),
                 "api_key": ("STRING", {"default": "", "tooltip": "Leer = aus .env"}),
             },
         }
 
-    RETURN_TYPES = ("IMAGE", "STRING")
-    RETURN_NAMES = ("image", "metadata")
+    RETURN_TYPES = ("VIDEO", "STRING")
+    RETURN_NAMES = ("video", "metadata")
     FUNCTION = "generate"
     CATEGORY = CATEGORY
 
-    async def generate(self, model, prompt, negative_prompt, seed, steps, guidance,
-                       prompt_upsampling, aspect_ratio, image_size, images=None,
-                       alpha=-1.0, conditioning_noise=-1.0,
+    @staticmethod
+    def _probe_url_dimensions(url: str) -> tuple[int, int]:
+        """Stream-probe a remote clip's (width, height) without downloading it.
+
+        PyAV only pulls the moov atom (kB, not MB) when you open a remote
+        source and read the first video stream's codec context. We don't
+        decode a single frame.
+        """
+        import av
+        with av.open(url, mode="r") as container:
+            for stream in container.streams:
+                if stream.type == "video":
+                    return int(stream.width), int(stream.height)
+        raise ValueError(f"Flux3: kein Video-Stream in {url}")
+
+    async def generate(self, video, target_resolution, creativity,
+                       input_video_url="", prompt="",
+                       safety_tolerance=SAFETY_TOLERANCE_DEFAULT,
                        timeout_minutes=DEFAULT_TIMEOUT_MINUTES, api_key=""):
-        if not prompt.strip():
-            raise ValueError("Flux3: prompt darf nicht leer sein.")
+        if target_resolution not in UPSCALE_TARGET_SHORT_SIDE:
+            raise ValueError(
+                f"Flux3: target_resolution '{target_resolution}' nicht unterstützt. "
+                f"Erlaubt: {', '.join(UPSCALE_TARGETS)}."
+            )
+        target_short = UPSCALE_TARGET_SHORT_SIDE[target_resolution]
 
-        mode = "i2i" if images is not None else "t2i"
-        payload: dict = {"mode": mode, "prompt": prompt.strip()}
-        if negative_prompt.strip():
-            payload["negative_prompt"] = negative_prompt.strip()
-        if seed:
-            if seed > MAX_SEED:
+        # --- Source dimensions: URL takes priority; otherwise the VIDEO input.
+        url = (input_video_url or "").strip()
+        if url:
+            if not url.startswith("http"):
                 raise ValueError(
-                    f"Flux3: seed darf höchstens {MAX_SEED} sein, bekommen: {seed}."
+                    "Flux3: input_video_url muss eine HTTP(S)-URL sein."
                 )
-            payload["seed"] = int(seed)
-        if steps:
-            payload["steps"] = int(steps)
-        if guidance:
-            payload["guidance"] = float(guidance)
-        if prompt_upsampling:
-            payload["prompt_upsampling"] = True
-        payload["aspect_ratio"] = aspect_ratio
-        payload["image_size"] = image_size
-        if alpha >= 0:
-            payload["alpha"] = float(alpha)
-        # conditioning_noise exists on i2i (probed 2026-07-26), not on t2i.
-        if conditioning_noise >= 0 and mode == "i2i":
-            payload["conditioning_noise"] = float(conditioning_noise)
+            src_w, src_h = await asyncio.to_thread(
+                self._probe_url_dimensions, url)
+            input_video = url
+        else:
+            if video is None:
+                raise ValueError(
+                    "Flux3: upscale braucht entweder den video-Input oder "
+                    "input_video_url."
+                )
+            src_w, src_h = video.get_dimensions()
+            input_video = await asyncio.to_thread(video_to_base64, video)
 
-        if images is not None:
-            encoded = await asyncio.to_thread(batch_to_base64, images)
-            payload["input_image"] = encoded if len(encoded) > 1 else encoded[0]
+        # --- Compute the upscale_factor from the source short side.
+        source_short = min(src_w, src_h)
+        factor = target_short / source_short
+        if factor < UPSCALE_FACTOR_MIN:
+            raise ValueError(
+                f"Flux3: Source ist {src_w}x{src_h} (short side {source_short}px) "
+                f"und damit bereits ≥ {target_resolution} (short side "
+                f"{target_short}px). Hochskalieren ergäbe Faktor "
+                f"{factor:.2f} < min {UPSCALE_FACTOR_MIN} — nichts zu upscaling. "
+                f"Wähle ein höheres target_resolution (z.B. 4K) oder eine "
+                f"kleinere Quelle."
+            )
+        if factor > UPSCALE_FACTOR_MAX:
+            log.warning(
+                "Flux3: %s aus Source %dx%d (short %d) nicht erreichbar "
+                "(Faktor wäre %.2f, max %.1f). Upcaling mit %.1fx — effektive "
+                "Short Side ~%dpx.",
+                target_resolution, src_w, src_h, source_short,
+                factor, UPSCALE_FACTOR_MAX, UPSCALE_FACTOR_MAX,
+                int(source_short * UPSCALE_FACTOR_MAX),
+            )
+            factor = UPSCALE_FACTOR_MAX
+
+        if creativity not in UPSCALE_CREATIVITY_MODES:
+            raise ValueError(
+                f"Flux3: creativity '{creativity}' nicht unterstützt. "
+                f"Erlaubt: {', '.join(UPSCALE_CREATIVITY_MODES)}."
+            )
+        creativity_val = 1 if creativity == "creative" else 0
+
+        if not (SAFETY_TOLERANCE_MIN <= safety_tolerance <= SAFETY_TOLERANCE_MAX):
+            raise ValueError(
+                f"Flux3: safety_tolerance muss {SAFETY_TOLERANCE_MIN}..{SAFETY_TOLERANCE_MAX} "
+                f"sein, bekommen: {safety_tolerance}."
+            )
+
+        payload: dict = {
+            "input_video": input_video,
+            "upscale_factor": float(factor),
+            "creativity": int(creativity_val),
+            "safety_tolerance": int(safety_tolerance),
+        }
+        if prompt.strip():
+            payload["prompt"] = prompt.strip()
 
         client = Flux3Client(api_key)
-        task, result, data = await _run(client, payload, timeout_minutes,
-                                        image_model=model)
-        return (bytes_to_image_tensor(data),
-                format_metadata(payload, result, task, image_model=model))
+        task = await asyncio.to_thread(client.submit_upscale, payload)
+        result = await client.poll_async(task, timeout=timeout_minutes * 60)
+        data = await asyncio.to_thread(client.download, extract_url(result))
+
+        meta = format_metadata(
+            payload, result, task,
+            endpoint_path=UPSCALE_ENDPOINT_PATH,
+            header_override="=== FLUX 3 VIDEO UPSCALE ===",
+        )
+        meta += (
+            f"\nsource_resolution : {src_w}x{src_h}\n"
+            f"target_resolution : {target_resolution} (short side {target_short}px)\n"
+            f"computed_factor   : {factor:.2f}"
+        )
+        return (VideoFromFile(io.BytesIO(data)), meta)
 
 
 # ===========================================================================
@@ -592,10 +676,12 @@ class Flux3Prompter:
 
 NODE_CLASS_MAPPINGS = {
     "Flux3VideoDRE": Flux3Video,
+    "Flux3VideoUpscaleDRE": Flux3VideoUpscale,
     "Flux3PrompterDRE": Flux3Prompter,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "Flux3VideoDRE": "🎬 Flux 3 Video (API)",
-    "Flux3PrompterDRE": "🎬 Flux 3 Openrouter Prompt",
+    "Flux3VideoDRE": "🎬 Flux 3 Video (API) *DRE",
+    "Flux3VideoUpscaleDRE": "🎬 Flux 3 Video Upscale (API) *DRE",
+    "Flux3PrompterDRE": "🎬 Flux 3 Openrouter Prompt *DRE",
 }
