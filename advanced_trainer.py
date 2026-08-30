@@ -97,13 +97,13 @@ class AdvancedLatentUpscaler(nn.Module):
         return output
 
 class LatentDataset(Dataset):
-    """Dataset für Latent-Tensoren mit Data Augmentation"""
+    """Dataset for latent tensors with data augmentation"""
     def __init__(self, data_dir, transform=None, augment=True):
         self.data_dir = data_dir
         self.transform = transform
         self.augment = augment
         
-        # Lade alle .pt Dateien
+        # Load all .pt files
         self.files = [f for f in os.listdir(data_dir) if f.endswith('.pt')]
         print(f"📁 Gefunden: {len(self.files)} Latent-Dateien")
         
@@ -217,19 +217,19 @@ class AdvancedTrainer:
         }
     
     def combined_loss(self, pred, target, alpha=1.0, beta=0.0):
-        """Kombinierte Loss: MSE ONLY für Latent Training"""
-        # Für Latent-Training verwenden wir NUR MSE Loss
-        # Perceptual Loss funktioniert nicht mit 4-Channel Latents
+        """Combined loss: MSE ONLY for latent training"""
+        # For latent training we use ONLY the MSE loss
+        # Perceptual loss does not work with 4-channel latents
 
         mse = self.mse_loss(pred, target)
 
-        # Perceptual Loss deaktiviert für Latent-Training
+        # Perceptual loss disabled for latent training
         # perceptual = self.perceptual_loss(pred_rgb, target_rgb)
 
         return alpha * mse  # + beta * perceptual
     
     def train_epoch(self, dataloader):
-        """Training für eine Epoche"""
+        """Train for one epoch"""
         self.model.train()
         total_loss = 0
         
@@ -324,7 +324,7 @@ class AdvancedTrainer:
         return self.history
 
 def main():
-    """Hauptfunktion für verbessertes Training"""
+    """Main entry point for the improved training run"""
     print("🚀 ADVANCED LATENT UPSCALER TRAINER V2.0")
     print("=" * 50)
     

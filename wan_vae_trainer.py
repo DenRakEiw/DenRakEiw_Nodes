@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
 🔥 WAN VAE LATENT UPSCALER TRAINER - DENRAKEIW SUPERHERO EDITION 🔥
-Optimiertes Training-System speziell für WAN VAE (16 Channels):
+Training system tuned specifically for the WAN VAE (16 channels):
 - 16-Channel Input/Output
-- Optimierte Architektur für WAN VAE Latents
+- Architecture tuned for WAN VAE latents
 - Advanced Loss Functions
 - Progressive Training
 """
@@ -19,15 +19,15 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 
 class WanVAEResidualBlock(nn.Module):
-    """Optimierter Residual Block für WAN VAE Latents (16 Channels)"""
+    """Residual block tuned for WAN VAE latents (16 channels)"""
     def __init__(self, channels=64):
         super().__init__()
         self.conv1 = nn.Conv2d(channels, channels, 3, padding=1)
         self.conv2 = nn.Conv2d(channels, channels, 3, padding=1)
-        self.norm1 = nn.GroupNorm(8, channels)  # GroupNorm für bessere Stabilität
+        self.norm1 = nn.GroupNorm(8, channels)  # GroupNorm for better stability
         self.norm2 = nn.GroupNorm(8, channels)
         self.activation = nn.LeakyReLU(0.2, inplace=True)
-        self.dropout = nn.Dropout2d(0.1)  # Leichtes Dropout für Regularisierung
+        self.dropout = nn.Dropout2d(0.1)  # Light dropout for regularisation
         
     def forward(self, x):
         residual = x
@@ -43,7 +43,7 @@ class WanVAEResidualBlock(nn.Module):
         return self.activation(out + residual)
 
 class WanVAEAttentionBlock(nn.Module):
-    """Self-Attention Block für bessere Feature-Korrelation"""
+    """Self-attention block for better feature correlation"""
     def __init__(self, channels):
         super().__init__()
         self.channels = channels
@@ -73,7 +73,7 @@ class WanVAEAttentionBlock(nn.Module):
 class AdvancedWanVAEUpscaler(nn.Module):
     """
     🔥 ADVANCED WAN VAE LATENT UPSCALER 🔥
-    Speziell optimiert für WAN VAE (16 Channels)
+    Tuned specifically for the WAN VAE (16 channels)
     Input: [16, 32, 32] -> Output: [16, 64, 64]
     """
     def __init__(self, input_channels=16, output_channels=16, base_channels=64, num_residual_blocks=8):
@@ -97,7 +97,7 @@ class AdvancedWanVAEUpscaler(nn.Module):
             WanVAEResidualBlock(base_channels) for _ in range(num_residual_blocks)
         ])
         
-        # Attention block für bessere Feature-Korrelation
+        # Attention block for better feature correlation
         self.attention = WanVAEAttentionBlock(base_channels)
         
         # Feature refinement vor Upsampling
@@ -121,10 +121,10 @@ class AdvancedWanVAEUpscaler(nn.Module):
             nn.GroupNorm(4, base_channels // 2),
             nn.LeakyReLU(0.2, inplace=True),
             nn.Conv2d(base_channels // 2, output_channels, 3, padding=1),
-            nn.Tanh()  # Für VAE Latent-Bereich
+            nn.Tanh()  # For the VAE latent range
         )
         
-        # Skip connection für bessere Gradients
+        # Skip connection for better gradients
         self.skip_conv = nn.Sequential(
             nn.Conv2d(input_channels, output_channels, 1),
             nn.Upsample(scale_factor=2, mode='bilinear', align_corners=False)
@@ -173,13 +173,13 @@ class AdvancedWanVAEUpscaler(nn.Module):
         return result
 
 class WanVAELatentDataset(Dataset):
-    """Dataset für WAN VAE Latent-Paare"""
+    """Dataset of WAN VAE latent pairs"""
     
     def __init__(self, latent_dir, augment=True):
         self.latent_dir = latent_dir
         self.augment = augment
         
-        # Finde alle Latent-Dateien
+        # Find every latent file
         self.files = [f for f in os.listdir(latent_dir) if f.endswith('.pt')]
         print(f"📊 WAN VAE Dataset: {len(self.files)} samples")
     
@@ -213,7 +213,7 @@ class WanVAELatentDataset(Dataset):
         return low_res, high_res
 
 class WanVAETrainer:
-    """Advanced Trainer für WAN VAE Latent Upscaler"""
+    """Advanced trainer for the WAN VAE latent upscaler"""
     
     def __init__(self, model, device='cuda'):
         self.model = model.to(device)
@@ -223,10 +223,10 @@ class WanVAETrainer:
         self.mse_loss = nn.MSELoss()
         self.l1_loss = nn.L1Loss()
         
-        # Optimizer mit besseren Parametern für WAN VAE
+        # Optimizer with better parameters for the WAN VAE
         self.optimizer = optim.AdamW(
             model.parameters(),
-            lr=2e-4,  # Etwas höhere LR für WAN VAE
+            lr=2e-4,  # Slightly higher LR for the WAN VAE
             weight_decay=1e-4,
             betas=(0.9, 0.999)
         )
@@ -246,11 +246,11 @@ class WanVAETrainer:
         }
     
     def combined_loss(self, pred, target):
-        """Optimierte Loss für WAN VAE Latents"""
-        # MSE für allgemeine Rekonstruktion
+        """Loss tuned for WAN VAE latents"""
+        # MSE for general reconstruction
         mse = self.mse_loss(pred, target)
         
-        # L1 für Schärfe
+        # L1 for sharpness
         l1 = self.l1_loss(pred, target)
         
         # Kombiniere Losses
@@ -259,7 +259,7 @@ class WanVAETrainer:
         return total_loss
     
     def train_epoch(self, dataloader):
-        """Training für eine Epoche"""
+        """Train for one epoch"""
         self.model.train()
         total_loss = 0
         
@@ -354,7 +354,7 @@ class WanVAETrainer:
         return self.history
 
 def main():
-    """Hauptfunktion für WAN VAE Training"""
+    """Main entry point for WAN VAE training"""
     print("🔥 WAN VAE LATENT UPSCALER TRAINER")
     print("=" * 50)
     
@@ -372,7 +372,7 @@ def main():
     
     print(f"🧠 Model parameters: {sum(p.numel() for p in model.parameters()):,}")
     
-    # Datasets (werden erstellt wenn Dataset-Creation fertig ist)
+    # Datasets (created once dataset creation has finished)
     train_dir = "wan_vae_datasets/latents/train"
     val_dir = "wan_vae_datasets/latents/validation"
     

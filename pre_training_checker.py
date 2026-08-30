@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
 🔍 PRE-TRAINING CHECKER
-Führt ALLE kritischen Prüfungen vor dem Training durch:
-- VAE-Authentizität
-- Dataset-Qualität  
+Runs ALL critical checks before training:
+- VAE authenticity
+- Dataset quality  
 - Latent-Validierung
 - Vorher-Nachher Paare
 - Visual Tests
@@ -16,8 +16,8 @@ from validation_system import run_complete_validation
 from dataset_preparation import LatentDatasetCreator
 
 def check_system_requirements():
-    """Prüfe System-Anforderungen"""
-    print("🔧 SYSTEM-ANFORDERUNGEN PRÜFEN")
+    """Check the system requirements"""
+    print("🔧 CHECKING SYSTEM REQUIREMENTS")
     print("=" * 40)
     
     # GPU Check
@@ -29,46 +29,46 @@ def check_system_requirements():
         
         if vram < 6:
             print("⚠️ WARNUNG: Wenig VRAM! Empfohlen: 8GB+")
-            print("   Reduziere batch_size auf 8 oder weniger")
+            print("   Reduce batch_size to 8 or less")
         
         return True
     else:
         print("❌ KEINE GPU GEFUNDEN!")
-        print("🚨 Training auf CPU wird SEHR langsam sein!")
+        print("🚨 Training on CPU will be VERY slow!")
         response = input("Trotzdem fortfahren? (y/n): ").lower()
         return response == 'y'
 
 def check_disk_space():
-    """Prüfe verfügbaren Speicherplatz"""
-    print("\n💾 SPEICHERPLATZ PRÜFEN")
+    """Check the available disk space"""
+    print("\n💾 CHECKING DISK SPACE")
     print("=" * 40)
 
     try:
-        # Windows-kompatible Speicherplatz-Prüfung
+        # Disk-space check that also works on Windows
         import shutil
         free_space_gb = shutil.disk_usage('.').free / (1024**3)
 
-        print(f"💾 Verfügbarer Speicher: {free_space_gb:.1f} GB")
+        print(f"💾 Free space: {free_space_gb:.1f} GB")
 
-        required_space = 15  # GB für Datasets + Models
+        required_space = 15  # GB for datasets + models
 
         if free_space_gb < required_space:
             print(f"❌ NICHT GENUG SPEICHER!")
-            print(f"   Benötigt: {required_space} GB")
-            print(f"   Verfügbar: {free_space_gb:.1f} GB")
+            print(f"   Required: {required_space} GB")
+            print(f"   Available: {free_space_gb:.1f} GB")
             return False
 
-        print(f"✅ Genug Speicher verfügbar")
+        print(f"✅ Enough free space")
         return True
 
     except Exception as e:
-        print(f"⚠️ Speicherplatz-Prüfung fehlgeschlagen: {e}")
+        print(f"⚠️ Disk-space check failed: {e}")
         print("✅ Fahre trotzdem fort...")
         return True
 
 def check_internet_connection():
-    """Prüfe Internet-Verbindung für Downloads"""
-    print("\n🌐 INTERNET-VERBINDUNG PRÜFEN")
+    """Check the internet connection for downloads"""
+    print("\n🌐 CHECKING INTERNET CONNECTION")
     print("=" * 40)
     
     try:
@@ -83,12 +83,12 @@ def check_internet_connection():
             return False
     except Exception as e:
         print(f"❌ Internet-Verbindung FEHLER: {e}")
-        print("🚨 Ohne Internet können keine Modelle/Datasets geladen werden!")
+        print("🚨 Without internet no models or datasets can be downloaded!")
         return False
 
 def check_existing_datasets():
-    """Prüfe existierende Datasets"""
-    print("\n📊 EXISTIERENDE DATASETS PRÜFEN")
+    """Check the existing datasets"""
+    print("\n📊 CHECKING EXISTING DATASETS")
     print("=" * 40)
     
     train_dir = "datasets/latents/train"
@@ -101,19 +101,19 @@ def check_existing_datasets():
         train_files = len([f for f in os.listdir(train_dir) if f.endswith('.pt')])
         print(f"✅ Training Dataset: {train_files} Latents")
     else:
-        print("⚠️ Training Dataset nicht gefunden")
+        print("⚠️ Training dataset not found")
         train_files = 0
     
     if val_exists:
         val_files = len([f for f in os.listdir(val_dir) if f.endswith('.pt')])
         print(f"✅ Validation Dataset: {val_files} Latents")
     else:
-        print("⚠️ Validation Dataset nicht gefunden")
+        print("⚠️ Validation dataset not found")
         val_files = 0
     
     if train_files < 100:
         print("⚠️ Wenige Training-Samples! Empfohlen: 500+")
-        print("   Kleinere Datasets können zu Overfitting führen")
+        print("   Smaller datasets can lead to overfitting")
     
     if val_files < 10:
         print("⚠️ Wenige Validation-Samples! Empfohlen: 50+")
@@ -121,7 +121,7 @@ def check_existing_datasets():
     return train_exists and val_exists and train_files > 0 and val_files > 0
 
 def create_datasets_if_needed():
-    """Erstelle Datasets falls nötig"""
+    """Create the datasets if they are missing"""
     print("\n📊 DATASET-ERSTELLUNG")
     print("=" * 40)
     
@@ -141,15 +141,15 @@ def create_datasets_if_needed():
         return True
 
 def run_comprehensive_check():
-    """Führe umfassende Pre-Training Checks durch"""
-    print("🔍 UMFASSENDE PRE-TRAINING PRÜFUNG")
+    """Run the full set of pre-training checks"""
+    print("🔍 FULL PRE-TRAINING CHECK")
     print("=" * 60)
-    print("Diese Prüfung stellt sicher, dass:")
-    print("✅ Echte Stability AI VAE verwendet wird (keine Fakes!)")
+    print("This check makes sure that:")
+    print("✅ a genuine Stability AI VAE is used (no fakes!)")
     print("✅ Datasets korrekt erstellt wurden")
-    print("✅ Latents gültig sind")
+    print("✅ the latents are valid")
     print("✅ Vorher-Nachher Paare funktionieren")
-    print("✅ System bereit für Training ist")
+    print("✅ the system is ready for training")
     print("=" * 60)
     
     checks_passed = 0
@@ -187,19 +187,19 @@ def run_comprehensive_check():
         print("❌ Check 4/5: Datasets FEHLGESCHLAGEN")
         return False
     
-    # 5. Vollständige Validierung
+    # 5. Full validation
     print("\n🔍 FINALE VALIDIERUNG...")
     if run_complete_validation():
         checks_passed += 1
-        print("✅ Check 5/5: Vollständige Validierung")
+        print("✅ Check 5/5: full validation")
     else:
-        print("❌ Check 5/5: Vollständige Validierung FEHLGESCHLAGEN")
+        print("❌ Check 5/5: full validation FAILED")
         return False
     
     # Ergebnis
     print("\n" + "=" * 60)
     print(f"🎉 ALLE CHECKS ERFOLGREICH! ({checks_passed}/{total_checks})")
-    print("✅ SYSTEM BEREIT FÜR TRAINING!")
+    print("✅ SYSTEM READY FOR TRAINING!")
     print("=" * 60)
     
     # Training-Empfehlungen
@@ -216,26 +216,26 @@ def run_comprehensive_check():
     else:
         print("   batch_size = 4 (CPU)")
     
-    print("   epochs = 200 (für beste Qualität)")
-    print("   learning_rate = 1e-4 (bewährt)")
+    print("   epochs = 200 (for the best quality)")
+    print("   learning_rate = 1e-4 (proven)")
     
     return True
 
 def main():
     """Hauptfunktion"""
     print("🔍 PRE-TRAINING CHECKER")
-    print("Dieser Check stellt sicher, dass alles für das Training bereit ist.")
+    print("This check makes sure everything is ready for training.")
     print()
     
     if run_comprehensive_check():
-        print("\n🚀 BEREIT FÜR TRAINING!")
-        print("Starte das Training mit:")
+        print("\n🚀 READY FOR TRAINING!")
+        print("Start the training with:")
         print("   python train_advanced_upscaler.py")
         print("oder:")
         print("   python quick_start_training.py")
     else:
-        print("\n❌ TRAINING NICHT MÖGLICH!")
-        print("Behebe die Probleme und führe den Check erneut aus.")
+        print("\n❌ TRAINING NOT POSSIBLE!")
+        print("Fix the problems and run the check again.")
         sys.exit(1)
 
 if __name__ == "__main__":

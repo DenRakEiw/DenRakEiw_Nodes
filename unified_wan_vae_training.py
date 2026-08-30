@@ -42,7 +42,7 @@ class UnifiedWanVAETrainingSystem:
         print("=" * 60)
     
     def check_dependencies(self):
-        """Prüfe alle Dependencies"""
+        """Check every dependency"""
         print("🔧 Checking dependencies...")
         
         required_packages = [
@@ -68,12 +68,12 @@ class UnifiedWanVAETrainingSystem:
         return True
     
     def run_dataset_creation(self):
-        """Führe Dataset Creation aus"""
+        """Run dataset creation"""
         print("\n1️⃣ DATASET CREATION")
         print("-" * 30)
         
         try:
-            # Führe Dataset Creator aus
+            # Run the dataset creator
             result = subprocess.run([
                 sys.executable, "wan_vae_dataset_creator.py"
             ], capture_output=True, text=True, timeout=3600)  # 1 hour timeout
@@ -97,7 +97,7 @@ class UnifiedWanVAETrainingSystem:
             return self._check_existing_dataset()
     
     def _check_existing_dataset(self):
-        """Prüfe ob Dataset bereits existiert"""
+        """Check whether the dataset already exists"""
         train_dir = self.dataset_dir / "latents" / "train"
         val_dir = self.dataset_dir / "latents" / "validation"
         
@@ -116,7 +116,7 @@ class UnifiedWanVAETrainingSystem:
         return False
     
     def run_model_training(self):
-        """Führe Model Training aus"""
+        """Run model training"""
         print("\n2️⃣ MODEL TRAINING")
         print("-" * 30)
         
@@ -125,7 +125,7 @@ class UnifiedWanVAETrainingSystem:
             return False
         
         try:
-            # Führe WAN VAE Trainer aus
+            # Run the WAN VAE trainer
             result = subprocess.run([
                 sys.executable, "wan_vae_trainer.py"
             ], capture_output=True, text=True, timeout=7200)  # 2 hours timeout
@@ -147,7 +147,7 @@ class UnifiedWanVAETrainingSystem:
             return self._check_trained_models()
     
     def _check_trained_models(self):
-        """Prüfe ob trainierte Modelle existieren"""
+        """Check whether trained models exist"""
         model_files = [
             self.models_dir / "best_wan_vae_upscaler.pth",
             "models/best_wan_vae_upscaler.pth",
@@ -192,7 +192,7 @@ class UnifiedWanVAETrainingSystem:
                         break
                     break
             
-            # Prüfe Node-Dateien
+            # Check the node files
             node_files = [
                 "wan_nn_latent_upscaler.py",
                 "optimized_wan_vae_node.py"
@@ -212,7 +212,7 @@ class UnifiedWanVAETrainingSystem:
             return False
     
     def run_testing(self):
-        """Führe Tests aus"""
+        """Run the tests"""
         print("\n4️⃣ TESTING")
         print("-" * 30)
         
@@ -305,7 +305,7 @@ class UnifiedWanVAETrainingSystem:
         return success_rate
     
     def run_full_pipeline(self):
-        """Führe komplette Pipeline aus"""
+        """Run the complete pipeline"""
         print("🚀 STARTING FULL WAN VAE TRAINING PIPELINE")
         print("=" * 60)
         

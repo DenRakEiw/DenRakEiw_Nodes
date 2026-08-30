@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
 🔥 ECHTE WAN VAE LOADER - DENRAKEIW SUPERHERO EDITION 🔥
-Lädt die echte WAN VAE für 16-Channel Latent Processing
-Unterstützt alle WAN VAE Formate: .pth, .safetensors, .ckpt
+Loads the real WAN VAE for 16-channel latent processing
+Supports every WAN VAE format: .pth, .safetensors, .ckpt
 """
 
 import torch
@@ -13,14 +13,14 @@ from safetensors.torch import load_file
 import json
 
 class WanVAELoader:
-    """Echter WAN VAE Loader für alle Formate"""
+    """Real WAN VAE loader for every format"""
     
     def __init__(self, device="cuda"):
         self.device = device
         self.vae = None
         self.vae_path = None
         
-        # WAN VAE Pfade (in Prioritätsreihenfolge)
+        # WAN VAE paths, in priority order
         self.wan_vae_paths = [
             "../../models/vae/Wan2.2_VAE_official.safetensors",
             "../../models/vae/Wan2.1_VAE_official.pth", 
@@ -34,7 +34,7 @@ class WanVAELoader:
         print(f"🔧 Device: {device}")
     
     def find_wan_vae(self):
-        """Finde verfügbare WAN VAE"""
+        """Find an available WAN VAE"""
         print("🔍 Searching for WAN VAE...")
         
         for path in self.wan_vae_paths:
@@ -61,14 +61,14 @@ class WanVAELoader:
         raise FileNotFoundError("❌ No WAN VAE found! Please ensure WAN VAE is in models/vae/")
     
     def load_safetensors_vae(self, path):
-        """Lade WAN VAE aus Safetensors"""
+        """Load the WAN VAE from safetensors"""
         print(f"🔧 Loading Safetensors WAN VAE: {path}")
         
         try:
             # Lade State Dict
             state_dict = load_file(path)
             
-            # Analysiere State Dict für Architektur
+            # Inspect the state dict to work out the architecture
             encoder_keys = [k for k in state_dict.keys() if 'encoder' in k]
             decoder_keys = [k for k in state_dict.keys() if 'decoder' in k]
             
@@ -88,7 +88,7 @@ class WanVAELoader:
             raise
     
     def load_pytorch_vae(self, path):
-        """Lade WAN VAE aus PyTorch"""
+        """Load the WAN VAE from a PyTorch checkpoint"""
         print(f"🔧 Loading PyTorch WAN VAE: {path}")
         
         try:
@@ -125,7 +125,7 @@ class WanVAELoader:
             raise
     
     def load_wan_vae(self, path=None):
-        """Hauptfunktion zum Laden der WAN VAE"""
+        """Main entry point for loading the WAN VAE"""
         if path is None:
             path = self.find_wan_vae()
         
@@ -147,7 +147,7 @@ class WanVAELoader:
         return self.vae
     
     def test_vae(self):
-        """Teste WAN VAE Funktionalität"""
+        """Test that the WAN VAE works"""
         print("🧪 Testing WAN VAE...")
         
         try:
@@ -181,7 +181,7 @@ class WanVAELoader:
             raise
 
 class WanVAEWrapper:
-    """Wrapper für WAN VAE State Dict"""
+    """Wrapper around a WAN VAE state dict"""
     
     def __init__(self, state_dict, device="cuda"):
         self.state_dict = state_dict
@@ -191,7 +191,7 @@ class WanVAEWrapper:
         # Analysiere State Dict
         self.analyze_architecture()
         
-        # Erstelle Mock-Funktionen für Kompatibilität
+        # Build mock functions for compatibility
         self.setup_mock_functions()
     
     def analyze_architecture(self):
@@ -210,7 +210,7 @@ class WanVAEWrapper:
         print(f"   Decoder layers: {len(decoder_layers)}")
         print(f"   Latent keys: {len(latent_keys)}")
         
-        # Schätze Latent-Channels
+        # Estimate the latent channel count
         for key, tensor in self.state_dict.items():
             if 'conv' in key.lower() and len(tensor.shape) == 4:
                 if tensor.shape[0] == 16 or tensor.shape[1] == 16:
@@ -218,7 +218,7 @@ class WanVAEWrapper:
                     break
     
     def setup_mock_functions(self):
-        """Setup Mock-Funktionen für Kompatibilität"""
+        """Set up mock functions for compatibility"""
         print("🔧 Setting up WAN VAE mock functions...")
         
         # Diese werden durch echte Implementierung ersetzt
@@ -231,11 +231,11 @@ class WanVAEWrapper:
         height = x.shape[2] // self.latent_size_factor
         width = x.shape[3] // self.latent_size_factor
         
-        # Für jetzt: Simuliere WAN VAE Encoding
+        # For now: simulate WAN VAE encoding
         # TODO: Implementiere echte WAN VAE Forward Pass
         latent = torch.randn(batch_size, self.latent_channels, height, width, device=self.device)
         
-        # Skaliere ähnlich wie echte VAE
+        # Scale similarly to the real VAE
         latent = latent * self.scaling_factor
         
         return latent
@@ -246,7 +246,7 @@ class WanVAEWrapper:
         height = z.shape[2] * self.latent_size_factor
         width = z.shape[3] * self.latent_size_factor
         
-        # Für jetzt: Simuliere WAN VAE Decoding
+        # For now: simulate WAN VAE decoding
         # TODO: Implementiere echte WAN VAE Forward Pass
         decoded = torch.randn(batch_size, 3, height, width, device=self.device)
         

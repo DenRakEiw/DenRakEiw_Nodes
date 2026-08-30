@@ -44,7 +44,7 @@ def setup_training_environment():
     return device
 
 def create_model(config):
-    """Erstelle Model basierend auf Config"""
+    """Build the model from the config"""
     model = AdvancedLatentUpscaler(
         input_channels=config.get('input_channels', 4),
         output_channels=config.get('output_channels', 4),
@@ -83,7 +83,7 @@ def prepare_datasets(config):
         # Kopiere 20% der Training-Daten als Validation
         import shutil
         train_files = [f for f in os.listdir(train_dir) if f.endswith('.pt')]
-        val_count = max(1, len(train_files) // 5)  # 20% für Validation
+        val_count = max(1, len(train_files) // 5)  # 20% for validation
 
         for i, filename in enumerate(train_files[:val_count]):
             src = os.path.join(train_dir, filename)
@@ -221,7 +221,7 @@ def main():
     print("=" * 60)
     if not run_complete_validation():
         print("❌ VALIDIERUNG FEHLGESCHLAGEN!")
-        print("🚨 TRAINING ABGEBROCHEN - PRÜFE DEINE DATEN!")
+        print("🚨 TRAINING ABORTED - CHECK YOUR DATA!")
         return
     print("✅ ALLE VALIDIERUNGEN ERFOLGREICH!")
 

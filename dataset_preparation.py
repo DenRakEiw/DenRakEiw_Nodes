@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 📊 DATASET PREPARATION FOR LATENT UPSCALER
-Erstellt große, hochqualitative Datasets aus verschiedenen Quellen:
+Builds large, high-quality datasets from several sources:
 - DIV2K Dataset
 - Flickr2K Dataset  
 - Custom Images
@@ -72,7 +72,7 @@ class DatasetDownloader:
         return div2k_dir
     
     def download_sample_images(self):
-        """Download zusätzliche Sample Images"""
+        """Download additional sample images"""
         print("📥 Downloading additional sample images...")
         samples_dir = os.path.join(self.base_dir, "samples")
         os.makedirs(samples_dir, exist_ok=True)
@@ -112,15 +112,15 @@ class VAELatentEncoder:
         self.device = device
         self.vae_model = vae_model
 
-        # KRITISCHE PRÜFUNG: Nur WAN VAE verwenden!
+        # CRITICAL CHECK: only ever use the WAN VAE!
         if vae_model not in self.OFFICIAL_WAN_VAES:
             raise ValueError(f"❌ FAKE VAE ERKANNT! '{vae_model}' ist NICHT WAN VAE!\n"
-                           f"✅ Verwende nur: {list(self.OFFICIAL_WAN_VAES.keys())}")
+                           f"✅ Use only: {list(self.OFFICIAL_WAN_VAES.keys())}")
 
         print(f"🔧 Loading OFFICIAL WAN VAE: {vae_model}")
         print(f"✅ {self.OFFICIAL_WAN_VAES[vae_model]}")
 
-        # Lade WAN VAE von lokalem Pfad
+        # Load the WAN VAE from a local path
         self.vae = self._load_wan_vae(vae_model).to(device)
         self.vae.eval()
 
@@ -135,11 +135,11 @@ class VAELatentEncoder:
         ])
 
     def _load_wan_vae(self, vae_path):
-        """Lade WAN VAE von lokalem Pfad"""
+        """Load the WAN VAE from a local path"""
         print(f"🔧 Loading WAN VAE from: {vae_path}")
 
         if not os.path.exists(vae_path):
-            raise FileNotFoundError(f"❌ WAN VAE nicht gefunden: {vae_path}")
+            raise FileNotFoundError(f"❌ WAN VAE not found: {vae_path}")
 
         try:
             if vae_path.endswith('.safetensors'):
@@ -173,7 +173,7 @@ class VAELatentEncoder:
                     # Falls es ein komplettes Model-Objekt ist
                     pass
                 else:
-                    # Falls es nur state_dict ist
+                    # In case it is only a state_dict
                     from diffusers import AutoencoderKL
                     vae_model = AutoencoderKL.from_config({
                         "in_channels": 3,
@@ -188,10 +188,10 @@ class VAELatentEncoder:
             return vae
 
         except Exception as e:
-            raise RuntimeError(f"❌ Fehler beim Laden der WAN VAE: {e}")
+            raise RuntimeError(f"❌ Failed to load the WAN VAE: {e}")
 
     def _validate_vae(self):
-        """Validiere VAE-Funktionalität"""
+        """Validate that the VAE works"""
         print("🔍 Validating VAE functionality...")
 
         try:
@@ -203,15 +203,15 @@ class VAELatentEncoder:
                 latent = self.vae.encode(test_input).latent_dist.sample()
                 latent = latent * self.vae.config.scaling_factor
 
-                # Prüfe Dimensionen
+                # Check the dimensions
                 expected_shape = (1, 4, 64, 64)
                 if latent.shape != expected_shape:
                     raise ValueError(f"❌ FALSCHE VAE! Latent shape: {latent.shape}, erwartet: {expected_shape}")
 
-                # Prüfe Scaling Factor
+                # Check the scaling factor
                 scaling_factor = self.vae.config.scaling_factor
                 if abs(scaling_factor - 0.18215) > 0.001:
-                    print(f"⚠️ Ungewöhnlicher Scaling Factor: {scaling_factor} (erwartet: ~0.18215)")
+                    print(f"⚠️ Unusual scaling factor: {scaling_factor} (expected ~0.18215)")
 
                 # Decode Test
                 decoded = self.vae.decode(latent / self.vae.config.scaling_factor).sample
@@ -245,7 +245,7 @@ class VAELatentEncoder:
             return None
     
     def encode_directory(self, image_dir, output_dir, max_images=None):
-        """Encode alle Bilder in einem Verzeichnis"""
+        """Encode every image in a directory"""
         os.makedirs(output_dir, exist_ok=True)
         
         # Find all image files
@@ -283,7 +283,7 @@ class LatentDatasetCreator:
         self.encoder = VAELatentEncoder()
     
     def create_training_dataset(self, target_size=2000):
-        """Erstellt großes Training-Dataset"""
+        """Build a large training dataset"""
         print("🚀 Creating Large Training Dataset...")
         
         # Download datasets
@@ -411,7 +411,7 @@ class LatentAugmentationDataset(torch.utils.data.Dataset):
         return low_res, high_res
 
 def main():
-    """Hauptfunktion für Dataset-Erstellung"""
+    """Main entry point for dataset creation"""
     print("📊 DATASET PREPARATION FOR ADVANCED TRAINING")
     print("=" * 50)
     

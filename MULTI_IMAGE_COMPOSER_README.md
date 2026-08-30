@@ -1,191 +1,193 @@
 # Multi-Image Aspect Ratio Composer
 
-Eine fortschrittliche ComfyUI Node zum Kombinieren mehrerer Bilder in ein einziges Ausgabebild mit spezifischem Seitenverhältnis.
+An advanced ComfyUI node that combines several images into a single output image with a
+specific aspect ratio.
 
 ## Features
 
-### 🎛️ Dynamische Input-Kontrolle
-- **Input Count Selector**: Wählen Sie zwischen 1-8 Input-Bildern
-- **Update Button**: Aktualisiert die Node-Inputs dynamisch
-- **Automatische UI-Anpassung**: Die Benutzeroberfläche passt sich automatisch an die gewählte Anzahl an
+### 🎛️ Dynamic input control
+- **Input Count Selector**: choose between 1 and 8 input images
+- **Update button**: updates the node inputs dynamically
+- **Automatic UI adjustment**: the interface adapts to the chosen count on its own
 
-### 📐 Seitenverhältnis-Presets
-- **1:1 (Square)**: Quadratisches Format
-- **4:3 (Standard)**: Klassisches Foto-Format
-- **3:4 (Portrait)**: Hochformat
-- **16:9 (Widescreen)**: Breitbild-Format
-- **9:16 (Vertical)**: Vertikales Breitbild
-- **21:9 (Ultrawide)**: Ultra-Breitbild
-- **9:21 (Ultra Vertical)**: Ultra-Vertikal
-- **3:2 (Photo)**: Standard-Foto-Format
-- **2:3 (Photo Portrait)**: Foto-Hochformat
-- **5:4 (Classic)**: Klassisches Format
-- **4:5 (Classic Portrait)**: Klassisches Hochformat
-- **16:10 (Monitor)**: Monitor-Format
-- **10:16 (Monitor Portrait)**: Monitor-Hochformat
-- **2:1 (Panorama)**: Panorama-Format
-- **1:2 (Vertical Panorama)**: Vertikales Panorama
+### 📐 Aspect ratio presets
+- **1:1 (Square)**: square format
+- **4:3 (Standard)**: classic photo format
+- **3:4 (Portrait)**: portrait format
+- **16:9 (Widescreen)**: widescreen format
+- **9:16 (Vertical)**: vertical widescreen
+- **21:9 (Ultrawide)**: ultra-wide format
+- **9:21 (Ultra Vertical)**: ultra-vertical format
+- **3:2 (Photo)**: standard photo format
+- **2:3 (Photo Portrait)**: photo portrait format
+- **5:4 (Classic)**: classic format
+- **4:5 (Classic Portrait)**: classic portrait format
+- **16:10 (Monitor)**: monitor format
+- **10:16 (Monitor Portrait)**: monitor portrait format
+- **2:1 (Panorama)**: panorama format
+- **1:2 (Vertical Panorama)**: vertical panorama
 
-### 🎯 Megapixel-Auswahl
-- **0.5 MP bis 32 MP**: Verschiedene Auflösungsoptionen
-- **Automatische Berechnung**: Breite und Höhe werden automatisch berechnet
-- **64-Pixel-Teilbarkeit**: Alle Ausgabedimensionen sind durch 64 teilbar
+### 🎯 Megapixel selection
+- **0.5 MP to 32 MP**: a range of resolution options
+- **Automatic calculation**: width and height are derived automatically
+- **Divisible by 64**: every output dimension is a multiple of 64
 
-### 🎨 Anordnungsoptionen
-- **Horizontal**: Bilder nebeneinander
-- **Vertical**: Bilder übereinander
-- **Smart Grid**: Intelligentes Raster-Layout (NEU!)
-  - Optimiert für das gewählte Seitenverhältnis
-  - Verwendet ALLE Bilder (keine werden mehr "verloren")
-  - Flexible Zeilen mit unterschiedlicher Bildanzahl
-- **Classic Grid**: Traditionelles starres Raster-Layout
+### 🎨 Arrangement options
+- **Horizontal**: images side by side
+- **Vertical**: images stacked
+- **Smart Grid**: intelligent grid layout (NEW!)
+  - Optimised for the chosen aspect ratio
+  - Uses ALL images, so none are dropped
+  - Flexible rows that may hold different numbers of images
+- **Classic Grid**: traditional rigid grid layout
 
-### ⚙️ Erweiterte Optionen
-- **Spacing**: Abstand zwischen Bildern (0-100 Pixel)
-- **Background Color**: Hintergrundfarbe (Schwarz, Weiß, Transparent)
-- **Automatisches Skalieren**: Bilder werden automatisch skaliert und zentriert beschnitten
+### ⚙️ Advanced options
+- **Spacing**: gap between images (0-100 pixels)
+- **Background Color**: background colour (black, white, transparent)
+- **Automatic scaling**: images are scaled and centre-cropped automatically
 
-### 🎭 Face Detection (NEU!)
-- **Face Detection**: Ein/Aus-Schalter für intelligentes Gesichtserkennung-Cropping
-- **Haar Cascade**: Schnelle Gesichtserkennung mit OpenCV
-- **DNN Face**: Erweiterte Deep Learning Gesichtserkennung (falls verfügbar)
-- **Confidence**: Einstellbare Erkennungsgenauigkeit (1.1 - 3.0)
-- **Intelligentes Cropping**: Bilder werden um erkannte Gesichter zentriert
-- **Fallback**: Automatischer Rückfall auf Center-Crop wenn keine Gesichter erkannt
+### 🎭 Face detection (NEW!)
+- **Face Detection**: on/off switch for face-aware cropping
+- **Haar Cascade**: fast face detection with OpenCV
+- **DNN Face**: deep-learning face detection, where available
+- **Confidence**: adjustable detection strictness (1.1 - 3.0)
+- **Smart cropping**: images are centred on the detected faces
+- **Fallback**: falls back to a centre crop when no face is found
 
-## Verwendung
+## Usage
 
-### Grundlegende Schritte:
-1. **Input Count einstellen**: Wählen Sie die gewünschte Anzahl von Input-Bildern (1-8)
-2. **Update Inputs klicken**: Aktualisiert die Node mit der entsprechenden Anzahl von Bild-Inputs
-3. **Aspect Ratio wählen**: Wählen Sie das gewünschte Seitenverhältnis
-4. **Megapixels einstellen**: Bestimmen Sie die Zielauflösung
-5. **Arrangement wählen**: Horizontal, Vertikal, Smart Grid oder Classic Grid
-6. **Face Detection konfigurieren**:
-   - **Disabled**: Standard Center-Cropping
-   - **Haar Cascade**: Schnelle Gesichtserkennung
-   - **DNN Face**: Erweiterte Gesichtserkennung
-7. **Confidence anpassen**: Erkennungsgenauigkeit (höher = strenger)
-8. **Bilder verbinden**: Verbinden Sie Ihre Bilder mit den Input-Slots
-9. **Ausführen**: Die Node erstellt das komponierte Bild
+### Basic steps
+1. **Set the input count**: choose how many input images you want (1-8)
+2. **Click Update Inputs**: rebuilds the node with that many image inputs
+3. **Choose an aspect ratio**: pick the ratio you want
+4. **Set the megapixels**: choose the target resolution
+5. **Choose an arrangement**: horizontal, vertical, smart grid or classic grid
+6. **Configure face detection**:
+   - **Disabled**: standard centre cropping
+   - **Haar Cascade**: fast face detection
+   - **DNN Face**: advanced face detection
+7. **Adjust the confidence**: detection strictness (higher = stricter)
+8. **Connect the images**: wire your images into the input slots
+9. **Run**: the node builds the composed image
 
-### Ausgaben:
-- **composed_image**: Das finale komponierte Bild
-- **width**: Breite des Ausgabebildes
-- **height**: Höhe des Ausgabebildes
-- **info**: Informationsstring mit Details zur Komposition
+### Outputs
+- **composed_image**: the finished composition
+- **width**: width of the output image
+- **height**: height of the output image
+- **info**: an information string describing the composition
 
-## Technische Details
+## Technical details
 
-### Bildverarbeitung:
-- **Intelligentes Cropping**: Bilder werden um erkannte Gesichter oder zentriert beschnitten
-- **Face Detection**: OpenCV-basierte Gesichtserkennung für optimales Cropping
-- **Bilineare Interpolation**: Hochwertige Skalierung der Bilder
-- **Automatische Größenanpassung**: Jedes Bild wird optimal in den verfügbaren Raum eingepasst
+### Image processing
+- **Smart cropping**: images are cropped around detected faces, or centred
+- **Face detection**: OpenCV-based detection for better cropping
+- **Bilinear interpolation**: high-quality scaling
+- **Automatic fitting**: every image is fitted into the space available to it
 
-### Face Detection Details:
+### Face detection details
 - **Haar Cascade**:
-  - Schnelle, CPU-effiziente Gesichtserkennung
-  - Gut für Frontalansichten
-  - Confidence 1.1-1.5 empfohlen
+  - Fast, CPU-friendly detection
+  - Good for frontal views
+  - Confidence 1.1-1.5 recommended
 - **DNN Face**:
-  - Erweiterte Deep Learning Erkennung
-  - Bessere Genauigkeit bei verschiedenen Winkeln
-  - Etwas langsamer als Haar Cascade
-- **Multiple Faces**:
-  - Bei mehreren Gesichtern wird das größte verwendet
-  - Fallback auf Center-Crop wenn keine Gesichter erkannt
-- **Debug Output**:
-  - Konsolen-Ausgabe zeigt erkannte Gesichter
-  - Hilfreich für Troubleshooting
+  - Advanced deep-learning detection
+  - Better accuracy across varied angles
+  - Somewhat slower than Haar Cascade
+- **Multiple faces**:
+  - With several faces the largest one is used
+  - Falls back to a centre crop when none is found
+- **Debug output**:
+  - The console prints the faces that were detected
+  - Useful when troubleshooting
 
-### Smart Grid Algorithmus (NEU!):
-Der intelligente Grid-Algorithmus optimiert die Anordnung basierend auf:
-- **Ziel-Seitenverhältnis**: Berechnet optimale Zeilen/Spalten-Verteilung
-- **Alle Bilder verwenden**: Keine Bilder gehen mehr verloren
-- **Flexible Layouts**: Verschiedene Bildanzahl pro Zeile
+### Smart Grid algorithm (NEW!)
+The smart grid optimises the arrangement based on:
+- **Target aspect ratio**: computes the best row/column split
+- **Using every image**: no image is dropped any more
+- **Flexible layouts**: rows may hold different numbers of images
 
-**Beispiele für 8 Bilder:**
-- **16:9 Ziel**: Layout [4, 4] (2 Zeilen mit je 4 Bildern)
-- **1:1 Ziel**: Layout [3, 3, 2] (3 Zeilen: 3+3+2 Bilder)
-- **9:16 Ziel**: Layout [2, 2, 2, 2] (4 Zeilen mit je 2 Bildern)
+**Examples for 8 images:**
+- **16:9 target**: layout [4, 4] (2 rows of 4)
+- **1:1 target**: layout [3, 3, 2] (3 rows: 3+3+2)
+- **9:16 target**: layout [2, 2, 2, 2] (4 rows of 2)
 
-### Classic Grid Layout:
-- **1 Bild**: 1x1 Raster
-- **2 Bilder**: 2x1 Raster
-- **3-4 Bilder**: 2x2 Raster
-- **5-6 Bilder**: 3x2 Raster
-- **7-8 Bilder**: 4x2 Raster (⚠️ kann Bilder "verlieren")
+### Classic Grid layout
+- **1 image**: 1x1 grid
+- **2 images**: 2x1 grid
+- **3-4 images**: 2x2 grid
+- **5-6 images**: 3x2 grid
+- **7-8 images**: 4x2 grid (⚠️ can drop images)
 
-### Dimensionsberechnung:
+### Dimension calculation
 ```python
-# Beispiel für 16:9 bei 2 MP:
+# Example for 16:9 at 2 MP:
 total_pixels = 2_000_000
 ratio = 16/9
 height = sqrt(total_pixels / ratio)
 width = height * ratio
-# Rundung auf nächste 64er-Grenze
+# Round to the nearest multiple of 64
 width = round(width / 64) * 64
 height = round(height / 64) * 64
 ```
 
-## Beispiele
+## Examples
 
-### Horizontal Layout:
-- 3 Bilder nebeneinander
-- 16:9 Seitenverhältnis
-- 4 MP Auflösung
-- Ergebnis: 2560x1440 Pixel
+### Horizontal layout
+- 3 images side by side
+- 16:9 aspect ratio
+- 4 MP resolution
+- Result: 2560x1440 pixels
 
-### Grid Layout:
-- 4 Bilder in 2x2 Anordnung
-- 1:1 Seitenverhältnis
-- 8 MP Auflösung
-- Ergebnis: 2816x2816 Pixel
+### Grid layout
+- 4 images in a 2x2 arrangement
+- 1:1 aspect ratio
+- 8 MP resolution
+- Result: 2816x2816 pixels
 
-### Vertical Layout:
-- 2 Bilder übereinander
-- 9:16 Seitenverhältnis
-- 2 MP Auflösung
-- Ergebnis: 1088x1920 Pixel
+### Vertical layout
+- 2 images stacked
+- 9:16 aspect ratio
+- 2 MP resolution
+- Result: 1088x1920 pixels
 
-### Portrait Composition mit Face Detection:
-- 4 Portrait-Bilder in 2x2 Grid
-- 1:1 Seitenverhältnis
-- Face Detection: Haar Cascade
+### Portrait composition with face detection
+- 4 portrait images in a 2x2 grid
+- 1:1 aspect ratio
+- Face detection: Haar Cascade
 - Confidence: 1.3
-- Ergebnis: Alle Gesichter optimal zentriert
+- Result: every face nicely centred
 
-## Tipps
+## Tips
 
-1. **Optimale Bildqualität**: Verwenden Sie Bilder mit ähnlicher Auflösung für beste Ergebnisse
-2. **Spacing nutzen**: Fügen Sie Abstand zwischen Bildern hinzu für bessere Trennung
-3. **Grid für viele Bilder**: Bei 4+ Bildern ist das Grid-Layout oft am besten
-4. **Megapixel anpassen**: Höhere MP-Werte für bessere Qualität, niedrigere für Performance
-5. **Seitenverhältnis beachten**: Wählen Sie das Seitenverhältnis passend zu Ihrem Verwendungszweck
-6. **Face Detection für Portraits**: Aktivieren Sie Face Detection bei Portrait-Bildern
-7. **Confidence anpassen**: Niedrigere Werte (1.1-1.3) für mehr Erkennungen, höhere (1.5-2.0) für genauere
-8. **Performance**: Face Detection kann die Verarbeitung verlangsamen - bei Bedarf deaktivieren
-9. **Debugging**: Konsolen-Output zeigt erkannte Gesichter für Troubleshooting
+1. **Image quality**: images of a similar resolution give the best result
+2. **Use spacing**: a gap between images separates them more clearly
+3. **Grid for many images**: with 4 or more images a grid layout is usually best
+4. **Adjust the megapixels**: higher for quality, lower for speed
+5. **Mind the aspect ratio**: pick the ratio that suits what you are making
+6. **Face detection for portraits**: turn it on when composing portraits
+7. **Adjust the confidence**: lower values (1.1-1.3) detect more, higher ones (1.5-2.0) detect
+   more precisely
+8. **Performance**: face detection slows processing down, so turn it off when you do not need it
+9. **Debugging**: the console output lists the faces that were detected
 
-## Kompatibilität
+## Compatibility
 
-- **ComfyUI**: Vollständig kompatibel
-- **Torch**: Nutzt PyTorch für Bildverarbeitung
-- **Memory**: Optimiert für verschiedene Speichergrößen
-- **Batch Processing**: Unterstützt Batch-Verarbeitung
+- **ComfyUI**: fully compatible
+- **Torch**: uses PyTorch for image processing
+- **Memory**: optimised for a range of memory sizes
+- **Batch processing**: supported
 
-## Fehlerbehebung
+## Troubleshooting
 
-### Häufige Probleme:
-1. **Keine Bilder sichtbar**: Überprüfen Sie, ob alle gewünschten Bild-Inputs verbunden sind
-2. **Falsche Dimensionen**: Klicken Sie "Update Inputs" nach Änderung der Input Count
-3. **Speicherfehler**: Reduzieren Sie die Megapixel-Einstellung
-4. **Qualitätsverlust**: Erhöhen Sie die Megapixel-Einstellung oder verwenden Sie weniger Bilder
+### Common problems
+1. **No images visible**: check that every image input you wanted is actually connected
+2. **Wrong dimensions**: click "Update Inputs" after changing the input count
+3. **Out of memory**: reduce the megapixel setting
+4. **Loss of quality**: raise the megapixel setting, or use fewer images
 
-### Debug-Informationen:
-Die Node gibt detaillierte Debug-Informationen in der Konsole aus:
-- Zieldimensionen
-- Seitenverhältnis
-- Anzahl verarbeiteter Bilder
-- Finale Ausgabedimensionen
+### Debug information
+The node prints detailed debug information to the console:
+- Target dimensions
+- Aspect ratio
+- Number of images processed
+- Final output dimensions

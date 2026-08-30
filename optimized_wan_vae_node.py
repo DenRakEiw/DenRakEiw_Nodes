@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 🔥 OPTIMIZED WAN VAE LATENT UPSCALER NODE - DENRAKEIW SUPERHERO EDITION 🔥
-Performance-optimierte ComfyUI Node für WAN VAE Latent Upscaling:
+Performance-optimised ComfyUI node for WAN VAE latent upscaling:
 - Automatische Model-Erkennung
 - Memory-optimiert
 - Batch-Processing
@@ -114,11 +114,11 @@ class OptimizedWanVAEUpscalerNode:
                 return "wan_vae", 16
     
     def _get_model_cache_key(self, model_type: str, channels: int) -> str:
-        """Erstelle Cache-Key für Model"""
+        """Build the cache key for a model"""
         return f"{model_type}_{channels}ch"
     
     def _load_model_cached(self, model_type: str, channels: int):
-        """Lade Model mit Caching"""
+        """Load a model, using the cache"""
         cache_key = self._get_model_cache_key(model_type, channels)
         
         if cache_key in self.model_cache:
@@ -228,7 +228,7 @@ class OptimizedWanVAEUpscalerNode:
     def _optimize_memory(self, memory_level: str):
         """Memory Optimization"""
         if memory_level == "auto":
-            # Auto-detect basierend auf verfügbarem VRAM
+            # Auto-detect based on the available VRAM
             try:
                 if torch.cuda.is_available():
                     vram_gb = torch.cuda.get_device_properties(0).total_memory / 1e9

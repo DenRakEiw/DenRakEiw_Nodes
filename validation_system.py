@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
 🔍 KRITISCHES VALIDIERUNGSSYSTEM
-Prüft ALLES vor dem Training:
+Checks EVERYTHING before training:
 - Echte Stability AI VAE (keine Fakes!)
 - Korrekte Latent-Erstellung
-- Vorher-Nachher Dataset-Qualität
+- Before/after dataset quality
 - Visual Validation
 """
 
@@ -22,7 +22,7 @@ from tqdm import tqdm
 import warnings
 
 class VAEValidator:
-    """Validiert die WAN VAE-Authentizität und Funktionalität"""
+    """Validates that the WAN VAE is genuine and works"""
 
     # Offizielle WAN VAE Modelle
     OFFICIAL_WAN_VAES = {
@@ -54,13 +54,13 @@ class VAEValidator:
         print(f"🔧 Loading WAN VAE DIRECTLY from: {vae_path}")
 
         if not os.path.exists(vae_path):
-            raise FileNotFoundError(f"❌ WAN VAE nicht gefunden: {vae_path}")
+            raise FileNotFoundError(f"❌ WAN VAE not found: {vae_path}")
 
         try:
             # Verwende ComfyUI's VAE Loading System
             import sys
 
-            # Füge ComfyUI Pfad hinzu
+            # Add the ComfyUI path
             comfy_path = os.path.join(os.path.dirname(__file__), '..', '..')
             if comfy_path not in sys.path:
                 sys.path.append(comfy_path)
@@ -69,7 +69,7 @@ class VAEValidator:
             from comfy import model_management
             from comfy import sd
 
-            # Lade WAN VAE mit ComfyUI System
+            # Load the WAN VAE through ComfyUI
             vae = sd.VAE(sd_path=vae_path)
 
             print("✅ WAN VAE successfully loaded with ComfyUI system!")
@@ -86,7 +86,7 @@ class VAEValidator:
                 elif vae_path.endswith('.pth'):
                     vae_state = torch.load(vae_path, map_location='cpu')
 
-                # Erstelle einfaches Mock-VAE für Validierung
+                # Build a simple mock VAE for validation
                 class MockWANVAE:
                     def __init__(self, state_dict):
                         self.state_dict = state_dict
@@ -96,7 +96,7 @@ class VAEValidator:
                         })()
 
                     def encode(self, x):
-                        # Mock encode - gibt richtige Dimensionen zurück
+                        # Mock encode - returns the right dimensions
                         batch_size = x.shape[0]
 
                         class LatentDist:
@@ -129,21 +129,21 @@ class VAEValidator:
                 raise RuntimeError(f"❌ Alle WAN VAE Loading-Methoden fehlgeschlagen: {e2}")
         
     def validate_vae_model(self):
-        """Prüfe ob WAN VAE-Model offiziell und empfohlen ist"""
+        """Check whether the WAN VAE model is official and recommended"""
         print("🔍 Validating WAN VAE model...")
 
         if self.vae_model not in self.OFFICIAL_WAN_VAES:
-            print(f"❌ WARNUNG: '{self.vae_model}' ist NICHT in der offiziellen WAN VAE Liste!")
-            print("🚨 MÖGLICHE FAKE VAE ERKANNT!")
+            print(f"❌ WARNING: '{self.vae_model}' is NOT on the official WAN VAE list!")
+            print("🚨 POSSIBLE FAKE VAE DETECTED!")
             print("\n✅ Empfohlene offizielle WAN VAEs:")
             for model, info in self.OFFICIAL_WAN_VAES.items():
                 if info["recommended"]:
                     print(f"   - {model}: {info['description']}")
             return False
 
-        # Prüfe ob Datei existiert
+        # Check whether the file exists
         if not os.path.exists(self.vae_model):
-            print(f"❌ WAN VAE Datei nicht gefunden: {self.vae_model}")
+            print(f"❌ WAN VAE file not found: {self.vae_model}")
             return False
 
         vae_info = self.OFFICIAL_WAN_VAES[self.vae_model]
@@ -157,11 +157,11 @@ class VAEValidator:
         return True
     
     def load_and_test_vae(self):
-        """Lade WAN VAE und teste Funktionalität"""
+        """Load the WAN VAE and test that it works"""
         print("🔧 Loading and testing WAN VAE...")
 
         try:
-            # Lade WAN VAE von lokalem Pfad
+            # Load the WAN VAE from a local path
             self.vae = self._load_wan_vae(self.vae_model).to(self.device)
             self.vae.eval()
             print("✅ WAN VAE loaded successfully")
@@ -175,11 +175,11 @@ class VAEValidator:
                 if hasattr(self.vae, 'config') and hasattr(self.vae.config, 'scaling_factor'):
                     latent = latent * self.vae.config.scaling_factor
 
-                # Prüfe Latent-Dimensionen (WAN VAE hat 16 Kanäle!)
+                # Check the latent dimensions (the WAN VAE has 16 channels!)
                 expected_channels = 16  # WAN VAE hat 16 Latent Channels
                 if latent.shape[1] != expected_channels:
                     print(f"⚠️ WAN VAE Latent Channels: {latent.shape[1]} (erwartet: {expected_channels})")
-                    print("   Das ist OK - WAN VAE hat andere Architektur!")
+                    print("   That is fine - the WAN VAE has a different architecture!")
 
                 print(f"✅ WAN VAE Latent shape: {latent.shape}")
                 print(f"✅ WAN VAE Latent range: [{latent.min():.3f}, {latent.max():.3f}]")
@@ -198,12 +198,12 @@ class VAEValidator:
 
                 print("✅ WAN VAE Encode/Decode test passed")
 
-                # Prüfe Scaling Factor
+                # Check the scaling factor
                 if hasattr(self.vae, 'config') and hasattr(self.vae.config, 'scaling_factor'):
                     scaling_factor = self.vae.config.scaling_factor
                     print(f"✅ WAN VAE scaling factor: {scaling_factor}")
                 else:
-                    print("✅ WAN VAE: Kein Scaling Factor (das ist OK)")
+                    print("✅ WAN VAE: no scaling factor (that is fine)")
 
                 return True
                 
@@ -212,8 +212,8 @@ class VAEValidator:
             return False
     
     def validate(self):
-        """Vollständige VAE-Validierung"""
-        print("🔍 VOLLSTÄNDIGE VAE-VALIDIERUNG")
+        """Full VAE validation"""
+        print("🔍 FULL VAE VALIDATION")
         print("=" * 40)
         
         # 1. Model-Validierung
@@ -241,45 +241,45 @@ class LatentValidator:
             # Lade Latent
             latent = torch.load(latent_path, map_location='cpu')
             
-            # Prüfe Typ
+            # Check the type
             if not isinstance(latent, torch.Tensor):
                 self.errors.append(f"{latent_path}: Nicht ein Tensor")
                 return False
             
-            # Prüfe Dimensionen
+            # Check the dimensions
             if len(latent.shape) != 3:
                 self.errors.append(f"{latent_path}: Falsche Dimensionen {latent.shape}")
                 return False
             
             if latent.shape[0] != 4:
-                self.errors.append(f"{latent_path}: Falsche Kanäle {latent.shape[0]}")
+                self.errors.append(f"{latent_path}: wrong channel count {latent.shape[0]}")
                 return False
             
-            # Prüfe Werte
+            # Check the values
             if torch.isnan(latent).any():
-                self.errors.append(f"{latent_path}: Enthält NaN")
+                self.errors.append(f"{latent_path}: contains NaN")
                 return False
             
             if torch.isinf(latent).any():
-                self.errors.append(f"{latent_path}: Enthält Inf")
+                self.errors.append(f"{latent_path}: contains Inf")
                 return False
             
-            # Prüfe Wertebereich (typisch für VAE Latents)
+            # Check the value range (typical for VAE latents)
             latent_min, latent_max = latent.min().item(), latent.max().item()
             if abs(latent_min) > 10 or abs(latent_max) > 10:
-                self.errors.append(f"{latent_path}: Ungewöhnlicher Wertebereich [{latent_min:.3f}, {latent_max:.3f}]")
+                self.errors.append(f"{latent_path}: unusual value range [{latent_min:.3f}, {latent_max:.3f}]")
                 return False
             
             self.valid_latents += 1
             return True
             
         except Exception as e:
-            self.errors.append(f"{latent_path}: Fehler beim Laden - {e}")
+            self.errors.append(f"{latent_path}: failed to load - {e}")
             self.invalid_latents += 1
             return False
     
     def validate_latent_directory(self, latent_dir, max_check=100):
-        """Validiere alle Latents in einem Verzeichnis"""
+        """Validate every latent in a directory"""
         print(f"🔍 Validating latents in: {latent_dir}")
         
         if not os.path.exists(latent_dir):
@@ -289,14 +289,14 @@ class LatentValidator:
         latent_files = [f for f in os.listdir(latent_dir) if f.endswith('.pt')]
         
         if len(latent_files) == 0:
-            print(f"❌ Keine .pt Dateien gefunden in: {latent_dir}")
+            print(f"❌ No .pt files found in: {latent_dir}")
             return False
         
         print(f"📁 Gefunden: {len(latent_files)} Latent-Dateien")
         
-        # Prüfe Stichprobe
+        # Check a sample
         check_files = latent_files[:min(max_check, len(latent_files))]
-        print(f"🔍 Prüfe {len(check_files)} Dateien...")
+        print(f"🔍 Checking {len(check_files)} files...")
         
         for filename in tqdm(check_files, desc="Validating"):
             latent_path = os.path.join(latent_dir, filename)
@@ -306,15 +306,15 @@ class LatentValidator:
         total_checked = len(check_files)
         success_rate = self.valid_latents / total_checked * 100
         
-        print(f"✅ Gültige Latents: {self.valid_latents}/{total_checked} ({success_rate:.1f}%)")
+        print(f"✅ Valid latents: {self.valid_latents}/{total_checked} ({success_rate:.1f}%)")
         
         if self.invalid_latents > 0:
-            print(f"❌ Ungültige Latents: {self.invalid_latents}")
+            print(f"❌ Invalid latents: {self.invalid_latents}")
             print("🔍 Erste 5 Fehler:")
             for error in self.errors[:5]:
                 print(f"   - {error}")
         
-        return success_rate > 95  # 95% müssen gültig sein
+        return success_rate > 95  # 95% must be valid
 
 class DatasetValidator:
     """Validiert Vorher-Nachher Dataset-Paare"""
@@ -323,7 +323,7 @@ class DatasetValidator:
         self.vae = vae
         
     def create_test_pairs(self, latent_dir, num_samples=5):
-        """Erstelle Test-Paare und validiere sie"""
+        """Build test pairs and validate them"""
         print("🔍 Creating and validating test pairs...")
         
         latent_files = [f for f in os.listdir(latent_dir) if f.endswith('.pt')][:num_samples]
@@ -337,7 +337,7 @@ class DatasetValidator:
                 # Lade Original-Latent
                 original_latent = torch.load(latent_path, map_location='cpu')
                 
-                # Stelle sicher, dass es 64x64 ist
+                # Make sure it is 64x64
                 if original_latent.shape[-1] != 64:
                     original_latent = F.interpolate(
                         original_latent.unsqueeze(0),
@@ -354,7 +354,7 @@ class DatasetValidator:
                     align_corners=False
                 ).squeeze(0)
                 
-                # Prüfe Dimensionen
+                # Check the dimensions
                 if low_res.shape != (4, 32, 32):
                     print(f"❌ {filename}: Falsche Low-Res Dimensionen {low_res.shape}")
                     continue
@@ -363,21 +363,21 @@ class DatasetValidator:
                     print(f"❌ {filename}: Falsche High-Res Dimensionen {original_latent.shape}")
                     continue
                 
-                # Prüfe Werte-Konsistenz
+                # Check that the values are consistent
                 low_res_mean = low_res.mean().item()
                 high_res_mean = original_latent.mean().item()
                 
                 if abs(low_res_mean - high_res_mean) > 1.0:
-                    print(f"⚠️ {filename}: Große Mittelwert-Differenz: {abs(low_res_mean - high_res_mean):.3f}")
+                    print(f"⚠️ {filename}: large mean difference: {abs(low_res_mean - high_res_mean):.3f}")
                 
                 valid_pairs += 1
-                print(f"✅ {filename}: Gültiges Paar ({low_res.shape} → {original_latent.shape})")
+                print(f"✅ {filename}: valid pair ({low_res.shape} → {original_latent.shape})")
                 
             except Exception as e:
                 print(f"❌ {filename}: Fehler - {e}")
         
         success_rate = valid_pairs / len(latent_files) * 100
-        print(f"📊 Gültige Paare: {valid_pairs}/{len(latent_files)} ({success_rate:.1f}%)")
+        print(f"📊 Valid pairs: {valid_pairs}/{len(latent_files)} ({success_rate:.1f}%)")
         
         return success_rate > 90
 
@@ -430,7 +430,7 @@ class VisualValidator:
         print(f"🎨 Visual tests saved to: {output_dir}")
 
 def run_complete_validation():
-    """Führe komplette Validierung durch"""
+    """Run the complete validation"""
     print("🔍 KOMPLETTE PRE-TRAINING VALIDIERUNG")
     print("=" * 50)
     
@@ -450,24 +450,24 @@ def run_complete_validation():
     
     if os.path.exists(train_dir):
         if not latent_validator.validate_latent_directory(train_dir):
-            print("❌ TRAINING LATENTS UNGÜLTIG!")
+            print("❌ TRAINING LATENTS INVALID!")
             return False
     else:
-        print("⚠️ Training Latents nicht gefunden - werden erstellt")
+        print("⚠️ Training latents not found - they will be created")
     
     if os.path.exists(val_dir):
         if not latent_validator.validate_latent_directory(val_dir):
-            print("❌ VALIDATION LATENTS UNGÜLTIG!")
+            print("❌ VALIDATION LATENTS INVALID!")
             return False
     else:
-        print("⚠️ Validation Latents nicht gefunden - werden erstellt")
+        print("⚠️ Validation latents not found - they will be created")
     
     # 3. Dataset-Paar Validierung
     if os.path.exists(train_dir):
         print("\n3️⃣ DATASET-PAAR VALIDIERUNG")
         dataset_validator = DatasetValidator(vae_validator.vae)
         if not dataset_validator.create_test_pairs(train_dir):
-            print("❌ DATASET-PAARE UNGÜLTIG!")
+            print("❌ DATASET PAIRS INVALID!")
             return False
     
     # 4. Visuelle Validierung
@@ -477,7 +477,7 @@ def run_complete_validation():
         visual_validator.create_visual_test(train_dir)
     
     print("\n✅ ALLE VALIDIERUNGEN ERFOLGREICH!")
-    print("🚀 BEREIT FÜR TRAINING!")
+    print("🚀 READY FOR TRAINING!")
     return True
 
 if __name__ == "__main__":

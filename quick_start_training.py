@@ -10,7 +10,7 @@ import subprocess
 import torch
 
 def check_requirements():
-    """Prüfe und installiere Requirements"""
+    """Check and install the requirements"""
     print("🔍 Checking requirements...")
     
     required_packages = [
@@ -44,7 +44,7 @@ def check_requirements():
         print("✅ All requirements satisfied!")
 
 def check_gpu():
-    """Prüfe GPU Verfügbarkeit"""
+    """Check GPU availability"""
     print("\n🔧 Checking GPU...")
     
     if torch.cuda.is_available():
@@ -62,7 +62,7 @@ def check_gpu():
         return False
 
 def quick_setup():
-    """Quick Setup für Training"""
+    """Quick setup for training"""
     print("🚀 QUICK START - ADVANCED LATENT UPSCALER")
     print("=" * 50)
     

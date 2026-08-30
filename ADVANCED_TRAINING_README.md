@@ -1,28 +1,28 @@
 # 🚀 Advanced Latent Upscaler Training V2.0
 
-Ein komplettes, verbessertes Training-System für hochqualitative Latent-Upscaler mit modernsten Deep Learning Techniken.
+A complete, improved training system for high-quality latent upscalers, using modern deep learning techniques.
 
-## 🎯 Verbesserungen gegenüber V1.0
+## 🎯 Improvements over V1.0
 
 ### ✨ **Neue Features:**
-- **🧠 Residual Architecture** - Besserer Gradient Flow
-- **👁️ Perceptual Loss** - Realistischere Ergebnisse  
-- **📊 Große Datasets** - DIV2K + Flickr2K (2000+ Bilder)
+- **🧠 Residual Architecture** - better gradient flow
+- **👁️ Perceptual Loss** - more realistic results  
+- **📊 Large datasets** - DIV2K + Flickr2K (2000+ images)
 - **🔄 Data Augmentation** - Flips, Rotationen, Noise
 - **📈 Progressive Training** - Cosine Annealing LR
 - **📊 Monitoring** - Plots, Logs, Checkpoints
-- **⚡ Auto-Setup** - Ein-Klick Installation
+- **⚡ Auto-Setup** - one-click installation
 
-### 🏗️ **Architektur-Verbesserungen:**
-- **Residual Blocks** statt einfache Convolutions
-- **LeakyReLU** statt Tanh für weniger Glättung
-- **PixelShuffle** für besseres Upsampling
-- **Gradient Clipping** für stabiles Training
-- **AdamW Optimizer** mit Weight Decay
+### 🏗️ **Architecture improvements:**
+- **Residual Blocks** instead of plain convolutions
+- **LeakyReLU** instead of Tanh, for less smoothing
+- **PixelShuffle** for better upsampling
+- **Gradient Clipping** for stable training
+- **AdamW Optimizer** with weight decay
 
 ## 🚀 Quick Start
 
-### **Option 1: Ein-Klick Training**
+### **Option 1: one-click training**
 ```bash
 python quick_start_training.py
 ```
@@ -40,15 +40,15 @@ python train_advanced_upscaler.py
 
 ### **Automatisch heruntergeladen:**
 - **DIV2K Dataset** (800 Training + 100 Validation)
-- **Sample Images** von Unsplash
+- **Sample images** from Unsplash
 - **Automatische VAE-Kodierung** zu Latents
 
-### **Unterstützte Formate:**
+### **Supported formats:**
 - JPG, PNG, BMP, TIFF
-- Automatische Größenanpassung auf 512x512
+- Automatic resizing to 512x512
 - VAE-Kodierung zu 4x64x64 Latents
 
-## 🏗️ Architektur
+## 🏗️ Architecture
 
 ```python
 AdvancedLatentUpscaler(
@@ -81,7 +81,7 @@ total_loss = 0.7 * MSE_loss + 0.3 * Perceptual_loss
 ```
 
 - **MSE Loss**: Pixel-genaue Rekonstruktion
-- **Perceptual Loss**: VGG19-basierte Feature-Ähnlichkeit
+- **Perceptual Loss**: VGG19-based feature similarity
 
 ## ⚙️ Training Configuration
 
@@ -124,36 +124,36 @@ config = {
 ### **Minimum:**
 - **GPU**: 6GB VRAM (GTX 1060, RTX 2060)
 - **RAM**: 16GB
-- **Storage**: 10GB für Datasets
+- **Storage**: 10 GB for the datasets
 
 ### **Empfohlen:**
 - **GPU**: 12GB+ VRAM (RTX 3080, RTX 4070)
 - **RAM**: 32GB
-- **Storage**: 50GB für große Datasets
+- **Storage**: 50 GB for the large datasets
 
 ### **Batch Size Empfehlungen:**
 - **6-8GB VRAM**: batch_size = 8
 - **8-12GB VRAM**: batch_size = 16  
 - **12GB+ VRAM**: batch_size = 32
 
-## 📁 Datei-Struktur
+## 📁 File layout
 
 ```
 denrakeiw_nodes/
 ├── advanced_trainer.py          # Trainer-Klassen
 ├── dataset_preparation.py       # Dataset-Download & Prep
 ├── train_advanced_upscaler.py   # Main Training Script
-├── quick_start_training.py      # Ein-Klick Setup
+├── quick_start_training.py      # one-click setup
 ├── wan_nn_latent_upscaler.py   # ComfyUI Node
 └── datasets/                    # Auto-erstellt
     ├── div2k/                   # DIV2K Dataset
-    ├── latents/                 # Kodierte Latents
+    ├── latents/                 # encoded latents
     │   ├── train/              # Training Latents
     │   └── validation/         # Validation Latents
     └── dataset_info.json       # Dataset Info
 ```
 
-## 🎮 Nach dem Training
+## 🎮 After training
 
 ### **1. Model in ComfyUI verwenden:**
 ```bash
@@ -166,13 +166,13 @@ cp models/best_model.pth /path/to/ComfyUI/models/upscale_models/
 ### **2. Node verwenden:**
 - Suche nach "Universal Latent Upscaler"
 - Verbinde Latent Input → Node → Latent Output
-- Genieße 2x bessere Qualität! 🚀
+- Enjoy twice the quality! 🚀
 
 ## 🔬 Erweiterte Optionen
 
-### **Custom Dataset hinzufügen:**
+### **Adding a custom dataset:**
 ```python
-# Eigene Bilder hinzufügen
+# Add your own images
 creator = LatentDatasetCreator()
 creator.encoder.encode_directory(
     "my_images/", 
@@ -190,7 +190,7 @@ optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
 
 ### **Hyperparameter-Tuning:**
 ```python
-# Experimentiere mit:
+# Things to experiment with:
 - num_residual_blocks: 4, 6, 8, 12
 - learning_rate: 1e-5, 5e-5, 1e-4, 2e-4  
 - loss_weights: (0.8, 0.2), (0.6, 0.4)
@@ -210,7 +210,7 @@ config['accumulate_grad_batches'] = 2
 
 ### **Slow Training:**
 ```python
-# Erhöhe num_workers
+# Raise num_workers
 config['num_workers'] = 8
 
 # Verwende pin_memory
@@ -219,35 +219,35 @@ pin_memory=True
 
 ### **Poor Quality:**
 ```python
-# Erhöhe Perceptual Loss Weight
+# Raise the perceptual loss weight
 config['perceptual_weight'] = 0.5
 
 # Mehr Residual Blocks
 config['num_residual_blocks'] = 12
 
-# Längeres Training
+# Train for longer
 config['epochs'] = 300
 ```
 
-## 📊 Erwartete Ergebnisse
+## 📊 Expected results
 
-### **Nach 50 Epochen:**
-- Grundlegende Upscaling-Fähigkeit
+### **After 50 epochs:**
+- Basic upscaling ability
 - Reduzierte Artefakte
 
-### **Nach 100 Epochen:**
+### **After 100 epochs:**
 - Gute Detail-Rekonstruktion
 - Stabile Farben
 
-### **Nach 200 Epochen:**
-- Hochqualitative Ergebnisse
-- Bessere Schärfe als Standard-Upscaling
+### **After 200 epochs:**
+- High-quality results
+- Sharper than standard upscaling
 
 ## 🎉 Support
 
 Bei Fragen oder Problemen:
-1. Prüfe die Logs in `logs/`
-2. Schaue dir die Plots in `plots/` an
+1. Check the logs in `logs/`
+2. Look at the plots in `plots/`
 3. Teste verschiedene Hyperparameter
 
-**Viel Erfolg beim Training! 🚀**
+**Good luck with the training! 🚀**

@@ -1,216 +1,216 @@
-# 🔒 SICHERHEITS-CHECKLISTE FÜR TRAINING
+# 🔒 SAFETY CHECKLIST FOR TRAINING
 
-## 🚨 KRITISCHE PRÜFUNGEN VOR TRAINING
+## 🚨 CRITICAL CHECKS BEFORE TRAINING
 
-### ✅ **1. VAE-AUTHENTIZITÄT (WICHTIGSTE PRÜFUNG!)**
+### ✅ **1. VAE AUTHENTICITY (THE MOST IMPORTANT CHECK!)**
 
-**🔍 Nur diese VAEs verwenden:**
-- ✅ `stabilityai/sd-vae-ft-mse` (EMPFOHLEN)
-- ✅ `stabilityai/sd-vae-ft-ema` (EMPFOHLEN)
+**🔍 Only ever use these VAEs:**
+- ✅ `stabilityai/sd-vae-ft-mse` (RECOMMENDED)
+- ✅ `stabilityai/sd-vae-ft-ema` (RECOMMENDED)
 
-**❌ NIEMALS verwenden:**
-- ❌ Unbekannte VAE-Modelle
-- ❌ Custom/Modified VAEs
-- ❌ VAEs von unverifizierten Quellen
-- ❌ Lokale VAE-Dateien ohne Verifikation
+**❌ NEVER use:**
+- ❌ Unknown VAE models
+- ❌ Custom or modified VAEs
+- ❌ VAEs from unverified sources
+- ❌ Local VAE files that have not been verified
 
-**🔍 Automatische Prüfung:**
+**🔍 Automatic check:**
 ```bash
 python validation_system.py
 ```
 
-### ✅ **2. LATENT-VALIDIERUNG**
+### ✅ **2. LATENT VALIDATION**
 
-**Korrekte Latent-Eigenschaften:**
-- ✅ Shape: `[4, H, W]` (4 Kanäle)
-- ✅ Wertebereich: ca. [-5, +5]
-- ✅ Keine NaN oder Inf Werte
-- ✅ Konsistente Dimensionen
+**What a correct latent looks like:**
+- ✅ Shape: `[4, H, W]` (4 channels)
+- ✅ Value range: roughly [-5, +5]
+- ✅ No NaN or Inf values
+- ✅ Consistent dimensions
 
-**Falsche Latents erkennen:**
-- ❌ Falsche Kanäle (nicht 4)
-- ❌ Extreme Werte (>10 oder <-10)
-- ❌ Korrupte Dateien
-- ❌ Inkonsistente Größen
+**How to spot a bad latent:**
+- ❌ Wrong channel count (not 4)
+- ❌ Extreme values (>10 or <-10)
+- ❌ Corrupt files
+- ❌ Inconsistent sizes
 
-### ✅ **3. DATASET-QUALITÄT**
+### ✅ **3. DATASET QUALITY**
 
-**Vorher-Nachher Paare:**
-- ✅ 32x32 → 64x64 Latents
-- ✅ Gleiche Inhalte, verschiedene Auflösungen
-- ✅ Korrekte Interpolation
-- ✅ Keine Artefakte
+**Before/after pairs:**
+- ✅ 32x32 → 64x64 latents
+- ✅ Same content at different resolutions
+- ✅ Correct interpolation
+- ✅ No artefacts
 
-**Dataset-Größe:**
-- ✅ Minimum: 500 Training-Samples
-- ✅ Empfohlen: 1000+ Training-Samples
-- ✅ Validation: 10% der Training-Größe
+**Dataset size:**
+- ✅ Minimum: 500 training samples
+- ✅ Recommended: 1000+ training samples
+- ✅ Validation: 10% of the training size
 
-### ✅ **4. SYSTEM-ANFORDERUNGEN**
+### ✅ **4. SYSTEM REQUIREMENTS**
 
 **Hardware:**
-- ✅ GPU: 6GB+ VRAM (empfohlen: 8GB+)
-- ✅ RAM: 16GB+ (empfohlen: 32GB)
-- ✅ Speicher: 15GB+ frei
+- ✅ GPU: 6 GB+ VRAM (8 GB+ recommended)
+- ✅ RAM: 16 GB+ (32 GB recommended)
+- ✅ Disk: 15 GB+ free
 
 **Software:**
-- ✅ PyTorch mit CUDA
-- ✅ Diffusers Library
-- ✅ Internet-Verbindung für Downloads
+- ✅ PyTorch with CUDA
+- ✅ The diffusers library
+- ✅ An internet connection for downloads
 
-## 🔍 AUTOMATISCHE VALIDIERUNG
+## 🔍 AUTOMATIC VALIDATION
 
-### **Vollständige Prüfung:**
+### **Full check:**
 ```bash
 python pre_training_checker.py
 ```
 
-### **Nur VAE prüfen:**
+### **Check the VAE only:**
 ```bash
 python validation_system.py
 ```
 
-### **Nur Datasets prüfen:**
+### **Check the datasets only:**
 ```bash
 python dataset_preparation.py
 ```
 
-## 🚨 WARNSIGNALE
+## 🚨 WARNING SIGNS
 
-### **❌ SOFORT STOPPEN bei:**
-- Fake VAE erkannt
-- Korrupte Latents gefunden
-- Extreme Werte in Daten
-- Speicher-/GPU-Fehler
-- Internet-Verbindung verloren
+### **❌ STOP IMMEDIATELY when:**
+- A fake VAE is detected
+- Corrupt latents are found
+- The data contains extreme values
+- Memory or GPU errors appear
+- The internet connection drops
 
-### **⚠️ VORSICHT bei:**
-- Wenige Training-Samples (<500)
-- Niedrige VRAM (<6GB)
-- Ungewöhnliche Latent-Werte
-- Langsame Internet-Verbindung
+### **⚠️ BE CAREFUL when:**
+- There are few training samples (<500)
+- VRAM is low (<6 GB)
+- Latent values look unusual
+- The internet connection is slow
 
-## 🎯 TRAINING-SICHERHEIT
+## 🎯 TRAINING SAFETY
 
-### **Während des Trainings:**
-- ✅ Regelmäßige Checkpoints
-- ✅ Loss-Monitoring
-- ✅ Validation-Checks
-- ✅ GPU-Temperatur überwachen
+### **During training:**
+- ✅ Save checkpoints regularly
+- ✅ Monitor the loss
+- ✅ Run validation checks
+- ✅ Watch the GPU temperature
 
-### **Nach dem Training:**
-- ✅ Model-Validierung
-- ✅ Test-Inferenz
-- ✅ Qualitäts-Vergleich
-- ✅ Backup erstellen
+### **After training:**
+- ✅ Validate the model
+- ✅ Run a test inference
+- ✅ Compare the quality
+- ✅ Make a backup
 
-## 🔧 FEHLERBEHEBUNG
+## 🔧 TROUBLESHOOTING
 
-### **VAE-Probleme:**
+### **VAE problems:**
 ```bash
-# Prüfe VAE-Authentizität
+# Check that the VAE is genuine
 python -c "from validation_system import VAEValidator; VAEValidator().validate()"
 
-# Lade nur offizielle VAE
+# Load only an official VAE
 vae = AutoencoderKL.from_pretrained("stabilityai/sd-vae-ft-mse")
 ```
 
-### **Latent-Probleme:**
+### **Latent problems:**
 ```bash
-# Prüfe Latent-Dateien
+# Check the latent files
 python -c "from validation_system import LatentValidator; LatentValidator().validate_latent_directory('datasets/latents/train')"
 
-# Neu-Erstellung bei Problemen
+# Rebuild them if something is wrong
 rm -rf datasets/latents/
 python dataset_preparation.py
 ```
 
-### **Dataset-Probleme:**
+### **Dataset problems:**
 ```bash
-# Komplette Neu-Erstellung
+# Rebuild everything
 rm -rf datasets/
 python dataset_preparation.py
 ```
 
-### **GPU-Probleme:**
+### **GPU problems:**
 ```bash
-# VRAM prüfen
+# Check the VRAM
 nvidia-smi
 
-# Batch-Size reduzieren
-# In config: batch_size = 8 (statt 16)
+# Reduce the batch size
+# In the config: batch_size = 8 (instead of 16)
 ```
 
-## 📊 QUALITÄTSKONTROLLE
+## 📊 QUALITY CONTROL
 
-### **Vor Training:**
-1. ✅ Alle Validierungen bestanden
-2. ✅ Visual Tests erfolgreich
-3. ✅ Beispiel-Latents dekodiert
-4. ✅ System-Check OK
+### **Before training:**
+1. ✅ Every validation passed
+2. ✅ Visual tests look right
+3. ✅ Sample latents decode correctly
+4. ✅ System check OK
 
-### **Während Training:**
-1. ✅ Loss sinkt kontinuierlich
-2. ✅ Keine NaN/Inf Werte
-3. ✅ GPU-Auslastung stabil
-4. ✅ Checkpoints werden gespeichert
+### **During training:**
+1. ✅ The loss keeps falling
+2. ✅ No NaN or Inf values
+3. ✅ GPU utilisation is stable
+4. ✅ Checkpoints are being written
 
-### **Nach Training:**
-1. ✅ Model lädt korrekt
-2. ✅ Test-Inferenz funktioniert
-3. ✅ Qualität besser als Baseline
-4. ✅ Keine Artefakte
+### **After training:**
+1. ✅ The model loads correctly
+2. ✅ Test inference works
+3. ✅ Quality beats the baseline
+4. ✅ No artefacts
 
-## 🎉 ERFOLGS-KRITERIEN
+## 🎉 SUCCESS CRITERIA
 
-### **Training erfolgreich wenn:**
-- ✅ Validation Loss < Training Loss
-- ✅ Visuelle Qualität verbessert
-- ✅ Keine Artefakte in Outputs
-- ✅ Model stabil konvergiert
-- ✅ Test-Samples sehen gut aus
+### **Training worked when:**
+- ✅ Validation loss < training loss
+- ✅ Visual quality improved
+- ✅ No artefacts in the outputs
+- ✅ The model converged stably
+- ✅ Test samples look good
 
-### **Training wiederholen wenn:**
-- ❌ Loss steigt kontinuierlich
-- ❌ Starke Artefakte
-- ❌ Model divergiert
-- ❌ Schlechtere Qualität als Baseline
-- ❌ NaN/Inf Werte auftreten
+### **Repeat the training when:**
+- ❌ The loss keeps rising
+- ❌ There are strong artefacts
+- ❌ The model diverges
+- ❌ Quality is worse than the baseline
+- ❌ NaN or Inf values appear
 
-## 🚀 FINALE CHECKLISTE
+## 🚀 FINAL CHECKLIST
 
-**Vor dem Training:**
-- [ ] VAE-Authentizität geprüft
-- [ ] Latents validiert
-- [ ] Dataset-Qualität bestätigt
-- [ ] System-Anforderungen erfüllt
-- [ ] Alle Validierungen bestanden
+**Before training:**
+- [ ] VAE authenticity checked
+- [ ] Latents validated
+- [ ] Dataset quality confirmed
+- [ ] System requirements met
+- [ ] Every validation passed
 
-**Training starten:**
+**Start the training:**
 ```bash
-# Empfohlene Reihenfolge:
-python pre_training_checker.py  # Vollständige Prüfung
-python train_advanced_upscaler.py  # Training starten
+# Recommended order:
+python pre_training_checker.py  # full check
+python train_advanced_upscaler.py  # start training
 ```
 
-**Bei Problemen:**
+**If something goes wrong:**
 ```bash
-# Debug-Modus
-python validation_system.py  # Detaillierte Prüfung
-python dataset_preparation.py  # Neu-Erstellung
+# Debug mode
+python validation_system.py  # detailed check
+python dataset_preparation.py  # rebuild
 ```
 
 ---
 
-## 🔒 **WICHTIGSTE REGEL:**
+## 🔒 **THE MOST IMPORTANT RULE:**
 
-**NIEMALS TRAINING STARTEN OHNE VOLLSTÄNDIGE VALIDIERUNG!**
+**NEVER START TRAINING WITHOUT A FULL VALIDATION!**
 
-Die Validierung verhindert:
-- ❌ Fake VAE Verwendung
-- ❌ Korrupte Daten
-- ❌ Verschwendete Trainingszeit
-- ❌ Schlechte Ergebnisse
-- ❌ System-Crashes
+Validation prevents:
+- ❌ Using a fake VAE
+- ❌ Corrupt data
+- ❌ Wasted training time
+- ❌ Poor results
+- ❌ System crashes
 
-**Immer zuerst:** `python pre_training_checker.py` 🔍
+**Always run first:** `python pre_training_checker.py` 🔍

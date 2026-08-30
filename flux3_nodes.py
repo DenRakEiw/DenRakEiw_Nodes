@@ -102,7 +102,7 @@ async def _build_keyframes(images: torch.Tensor | None, end_image: torch.Tensor 
     if images is None:
         raise ValueError("Flux3: i2v needs an images input.")
 
-    # images + end_image ist die bequeme Art, Start+Ende zu stecken.
+    # images + end_image is the convenient way to pin start and end.
     if end_image is not None:
         imgs = torch.cat([images[:1], end_image[:1]])
     else:

@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
 🔥 WAN VAE DATASET CREATOR - DENRAKEIW SUPERHERO EDITION 🔥
-Erstellt perfekte Vorher-Nachher Datasets für WAN VAE Latent Upscaler Training:
-1. Sammelt große hochqualitative Bilder
+Builds clean before/after datasets for WAN VAE latent upscaler training:
+1. Collects large, high-quality images
 2. Erstellt Vorher-Nachher Paare durch Runterskalierung
 3. Konvertiert zu WAN VAE Latents (16 Channels)
-4. Bereitet für Training vor
+4. Prepares them for training
 """
 
 import torch
@@ -24,7 +24,7 @@ import shutil
 import random
 
 class WanVAELatentEncoder:
-    """🔥 ECHTER WAN VAE ENCODER FÜR 16-CHANNEL LATENTS 🔥"""
+    """🔥 REAL WAN VAE ENCODER FOR 16-CHANNEL LATENTS 🔥"""
 
     def __init__(self, device="cuda"):
         self.device = device
@@ -32,7 +32,7 @@ class WanVAELatentEncoder:
 
         print(f"🔥 DENRAKEIW SUPERHERO ECHTER WAN VAE ENCODER")
 
-        # Image preprocessing für WAN VAE
+        # Image preprocessing for the WAN VAE
         self.transform = transforms.Compose([
             transforms.ToTensor(),
             transforms.Normalize([0.5], [0.5])  # [-1, 1]
@@ -69,7 +69,7 @@ class WanVAELatentEncoder:
                 self.device = device
                 self.scaling_factor = 0.18215
 
-                # Erstelle einfache Conv-Layer für realistischere Latents
+                # Build simple conv layers for more realistic latents
                 self.encoder_conv = torch.nn.Sequential(
                     torch.nn.Conv2d(3, 64, 4, stride=2, padding=1),  # 512->256
                     torch.nn.ReLU(),
@@ -77,7 +77,7 @@ class WanVAELatentEncoder:
                     torch.nn.ReLU(),
                     torch.nn.Conv2d(128, 256, 4, stride=2, padding=1), # 128->64
                     torch.nn.ReLU(),
-                    torch.nn.Conv2d(256, 16, 3, padding=1),  # 16 channels für WAN VAE
+                    torch.nn.Conv2d(256, 16, 3, padding=1),  # 16 channels for the WAN VAE
                 ).to(device)
 
                 # Initialisiere mit kleinen Gewichten
@@ -89,7 +89,7 @@ class WanVAELatentEncoder:
                 # Realistischere Encoding mit Conv-Layern
                 with torch.no_grad():
                     latent = self.encoder_conv(x)
-                    # Füge etwas Rauschen hinzu für Varianz
+                    # Add a little noise for variance
                     latent += torch.randn_like(latent) * 0.1
                     latent = latent * self.scaling_factor
                 return latent
@@ -132,7 +132,7 @@ class WanVAELatentEncoder:
                 elif hasattr(latent, 'latent_dist'):
                     latent = latent.latent_dist.sample()
 
-                # Skalierung falls verfügbar
+                # Scaling, if available
                 if hasattr(self.vae, 'scaling_factor'):
                     latent = latent * self.vae.scaling_factor
 
@@ -149,14 +149,14 @@ class WanVAELatentEncoder:
             return None
 
 class DatasetDownloader:
-    """Download großer hochqualitativer Datasets"""
+    """Download large, high-quality datasets"""
     
     def __init__(self, base_dir="wan_vae_datasets"):
         self.base_dir = base_dir
         os.makedirs(base_dir, exist_ok=True)
     
     def download_div2k(self):
-        """Download DIV2K für hochqualitative Bilder"""
+        """Download DIV2K for high-quality images"""
         print("📥 Downloading DIV2K Dataset...")
         div2k_dir = os.path.join(self.base_dir, "div2k")
         os.makedirs(div2k_dir, exist_ok=True)
@@ -219,7 +219,7 @@ class ImagePairCreator:
         print(f"   High-res: {high_res_size}x{high_res_size}")
         print(f"   Low-res: {low_res_size}x{low_res_size}")
         
-        # Finde alle Bilder
+        # Find every image
         image_extensions = {'.jpg', '.jpeg', '.png', '.bmp', '.tiff'}
         image_files = []
         
@@ -230,17 +230,17 @@ class ImagePairCreator:
         
         print(f"📁 Found {len(image_files)} source images")
         
-        # Shuffle für Varianz
+        # Shuffle for variance
         random.shuffle(image_files)
         
         created_pairs = 0
         
         for i, image_path in enumerate(tqdm(image_files[:target_count*2], desc="Creating pairs")):
             try:
-                # Lade Bild
+                # Load the image
                 image = Image.open(image_path).convert('RGB')
                 
-                # Prüfe Mindestgröße
+                # Check the minimum size
                 if min(image.size) < high_res_size:
                     continue
                 
@@ -329,12 +329,12 @@ class WanVAELatentDatasetCreator:
         print("🎉 WAN VAE Latent Dataset created successfully!")
     
     def _create_latents(self, pairs, output_dir, split_name):
-        """Erstelle Latents für eine Split"""
+        """Create the latents for one split"""
         print(f"🔄 Creating {split_name} latents...")
         
         for i, pair_name in enumerate(tqdm(pairs, desc=f"{split_name} latents")):
             try:
-                # Lade Bilder
+                # Load the images
                 high_res_path = os.path.join(self.high_res_dir, pair_name)
                 low_res_path = os.path.join(self.low_res_dir, pair_name)
                 

@@ -84,7 +84,7 @@ class WanNNLatentUpscaler(nn.Module):
 
         # Input: [16, 32, 32] -> Output: [16, 64, 64]
 
-        # Encoder für bessere Feature-Extraktion
+        # Encoder for better feature extraction
         self.encoder = nn.Sequential(
             nn.Conv2d(16, 64, 3, padding=1),
             nn.ReLU(inplace=True),
@@ -104,10 +104,10 @@ class WanNNLatentUpscaler(nn.Module):
         # Output-Layer
         self.output = nn.Sequential(
             nn.Conv2d(32, 16, 3, padding=1),
-            nn.Tanh()  # Für VAE-Latents geeignet
+            nn.Tanh()  # Suitable for VAE latents
         )
 
-        # Residual Connection für bessere Gradients
+        # Residual connection for better gradients
         self.residual_proj = nn.ConvTranspose2d(16, 16, 4, stride=2, padding=1)
 
     def forward(self, x):
