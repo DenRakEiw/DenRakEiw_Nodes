@@ -52,12 +52,12 @@ class LoadImageSequence:
                 }),
                 "random_image": ("BOOLEAN", {
                     "default": False,
-                    "tooltip": "Statt der Reihe nach: zufälliges Bild aus dem Ordner laden"
+                    "tooltip": "Instead of going in order, load a random image from the folder"
                 }),
                 "no_repeats": ("BOOLEAN", {
                     "default": True,
-                    "tooltip": "Nur bei random_image: jedes Bild kommt einmal dran, bevor sich "
-                               "eines wiederholt. Aus = jedes Mal frei gewürfelt (Dubletten möglich)"
+                    "tooltip": "random_image only: every image is used once before any repeats. "
+                               "Off means a free draw each time, so duplicates are possible"
                 }),
                 "seed": ("INT", {
                     "default": 0, "min": 0, "max": 0xFFFFFFFFFFFFFFFF,
@@ -86,7 +86,7 @@ class LoadImageSequence:
         if not pool:
             pool = list(image_files)
             rng.shuffle(pool)
-            print(f"✓ Random-Pool neu gefüllt ({len(pool)} Bilder)")
+            print(f"Random pool refilled ({len(pool)} images)")
 
         chosen = pool.pop()
         state['random_pool'] = pool
@@ -336,7 +336,9 @@ class LoadImageSequenceInfo:
                 "=== Image Sequence Info ===",
                 f"Folder: {folder_path}",
                 f"Total images: {len(image_files)}",
-                f"Current index: {current_index + 1}/{len(image_files)}" if image_files else "Current index: 0/0",
+                f"Current index: {current_index + 1}/{len(image_files)}" if image_files else "Current "
+                                                                                             "index: "
+                                                                                             "0/0",
                 f"Next image: {image_files[current_index] if current_index < len(image_files) else 'None'}",
                 "",
                 "Recent files:"

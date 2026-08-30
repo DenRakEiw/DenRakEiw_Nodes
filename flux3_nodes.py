@@ -85,8 +85,8 @@ def _parse_keyframe_times(text: str) -> list[float]:
         return [float(x) for x in text.replace(";", ",").split(",") if x.strip()]
     except ValueError as exc:
         raise ValueError(
-            f"Flux3: keyframe_times muss eine Liste von Sekunden sein (z.B. '0, 4.5, 10'), "
-            f"bekommen: {text!r}"
+            f"Flux3: keyframe_times must be a list of seconds (e.g. '0, 4.5, 10'), "
+            f"got: {text!r}"
         ) from exc
 
 
@@ -96,11 +96,11 @@ async def _build_keyframes(images: torch.Tensor | None, end_image: torch.Tensor 
 
     - 1 image, no times: opening frame           -> str
     - 2 images (or images + end_image): start+end -> [str, str]
-    - 3+ images, no times: evenly spread          -> [str, ...]  (duration muss gesetzt sein)
+    - 3+ images, no times: evenly spread          -> [str, ...]  (duration must be set)
     - images + keyframe_times: storyboard         -> [[seconds, str], ...]
     """
     if images is None:
-        raise ValueError("Flux3: i2v braucht einen images-Input.")
+        raise ValueError("Flux3: i2v needs an images input.")
 
     # images + end_image ist die bequeme Art, Start+Ende zu stecken.
     if end_image is not None:
@@ -110,10 +110,10 @@ async def _build_keyframes(images: torch.Tensor | None, end_image: torch.Tensor 
 
     n = len(imgs)
     if n < 1:
-        raise ValueError("Flux3: i2v braucht mindestens ein Bild am images-Input.")
+        raise ValueError("Flux3: i2v needs at least one image on the images input.")
     if n > MAX_KEYFRAMES:
         raise ValueError(
-            f"Flux3: i2v nimmt höchstens {MAX_KEYFRAMES} Keyframes, der Batch hat {n}."
+            f"Flux3: i2v accepts at most {MAX_KEYFRAMES} keyframes, but the batch has {n}."
         )
 
     times_text = keyframe_times.strip()
@@ -121,23 +121,23 @@ async def _build_keyframes(images: torch.Tensor | None, end_image: torch.Tensor 
         times = _parse_keyframe_times(times_text)
         if len(times) != n:
             raise ValueError(
-                f"Flux3: keyframe_times braucht genauso viele Werte wie Bilder — "
-                f"{n} Bild(er), aber {len(times)} Zeit(en)."
+                f"Flux3: keyframe_times needs as many values as there are images - "
+                f"{n} image(s) but {len(times)} time(s)."
             )
         if any(times[i] > times[i + 1] for i in range(len(times) - 1)):
             raise ValueError(
-                f"Flux3: keyframe_times müssen aufsteigend sein, bekommen: {times}"
+                f"Flux3: keyframe_times must ascend, got: {times}"
             )
         if any(t < 0 for t in times):
-            raise ValueError(f"Flux3: keyframe_times dürfen nicht negativ sein: {times}")
+            raise ValueError(f"Flux3: keyframe_times must not be negative: {times}")
         encoded = await asyncio.to_thread(batch_to_base64, imgs)
         return [[t, b64] for t, b64 in zip(times, encoded)]
 
     if n >= 3 and duration_value == "auto":
         # Spec: "3 or more need a set duration."
         raise ValueError(
-            "Flux3: 3+ Keyframes ohne keyframe_times brauchen eine feste duration "
-            "(5–20). Stelle duration auf einen Wert, oder gib keyframe_times an."
+            "Flux3: 3+ keyframes without keyframe_times need a fixed duration (5-20). Set duration "
+            "to a value, or supply keyframe_times."
         )
 
     encoded = await asyncio.to_thread(batch_to_base64, imgs)
@@ -147,7 +147,7 @@ async def _build_keyframes(images: torch.Tensor | None, end_image: torch.Tensor 
 
 
 class Flux3Video:
-    """FLUX 3 Video — t2v / i2v / v2v / draft_enhance, mit synchronem Audio."""
+    """FLUX 3 Video - t2v / i2v / v2v / draft_enhance, with synchronised audio."""
 
     @classmethod
     def INPUT_TYPES(cls):
@@ -155,67 +155,67 @@ class Flux3Video:
             "required": {
                 "mode": (VIDEO_MODES, {
                     "default": "t2v",
-                    "tooltip": "t2v: Text→Video · "
-                               "i2v: Bild(er)→Video (keyframes) · "
-                               "v2v: Clip fortsetzen (start_video) · "
-                               "draft_enhance: einen vorherigen draft final rendern."}),
+                    "tooltip": "t2v: text to video. i2v: image(s) to video (keyframes). v2v: "
+                               "continue a clip (start_video). draft_enhance: render an earlier "
+                               "draft at full quality."}),
                 "prompt": ("STRING", {
                     "multiline": True, "default": "",
-                    "tooltip": "Pflicht für t2v/i2v/v2v. Bei draft_enhance nicht "
-                               "erlaubt — der draft_cache pins alles."}),
+                    "tooltip": "Required for t2v/i2v/v2v. Not allowed with draft_enhance, where "
+                               "the draft_cache pins everything."}),
                 "aspect_ratio": (ASPECT_RATIOS, {
                     "default": "auto",
-                    "tooltip": "'auto' läßt die API anhand von Prompt und Referenzen wählen."}),
+                    "tooltip": "'auto' lets the API choose based on the prompt and the "
+                               "references."}),
                 "duration": (DURATIONS, {
                     "default": "auto",
-                    "tooltip": "Ganze Sekunden 5–20, oder 'auto'. 3+ Keyframes ohne "
-                               "keyframe_times brauchen eine feste Länge."}),
+                    "tooltip": "Whole seconds 5-20, or 'auto'. 3+ keyframes without keyframe_times "
+                               "need a fixed length."}),
                 "resolution": (RESOLUTIONS, {
                     "default": "hd",
-                    "tooltip": "hd = Default · fhd = höhere Auflösung (Video-Upscaler)."}),
+                    "tooltip": "hd = default. fhd = higher resolution, via the video "
+                               "upscaler."}),
                 "generate_audio": ("BOOLEAN", {
                     "default": True,
-                    "tooltip": "Default an. Aus = stummer Clip."}),
+                    "tooltip": "On by default. Off gives a silent clip."}),
                 "safety_tolerance": ("INT", {
                     "default": SAFETY_TOLERANCE_DEFAULT,
                     "min": SAFETY_TOLERANCE_MIN, "max": SAFETY_TOLERANCE_MAX,
-                    "tooltip": "0 (strengste) bis 4. Default 2. Mit Conditioning-Media "
-                               "maximal 2."}),
+                    "tooltip": "0 (strictest) to 4. Default 2. With conditioning media the maximum "
+                               "is 2."}),
                 "draft": ("BOOLEAN", {
                     "default": False,
-                    "tooltip": "Schnelle hd-Vorschau. Das Ergebnis enthält einen "
-                               "draft_cache, den man mit mode=draft_enhance final "
-                               "rendern kann."}),
+                    "tooltip": "Fast hd preview. The result carries a draft_cache that you can "
+                               "render at full quality with mode=draft_enhance."}),
                 "version": ("STRING", {
                     "default": "latest",
-                    "tooltip": "Aktuell nur 'latest' freigegeben."}),
+                    "tooltip": "Only 'latest' is available at the moment."}),
             },
             "optional": {
                 "images": ("IMAGE", {
-                    "tooltip": "Nur i2v: 1 Bild (Startframe) · 2 Bilder (Start+Ende) · "
-                               "3–10 Bilder (gleichmäßig verteilt, braucht duration) · "
-                               "oder zusammen mit keyframe_times (Storyboard)."}),
+                    "tooltip": "i2v only. 1 image is the start frame, 2 images are start and end, "
+                               "3-10 images are spaced evenly and need duration. Or combine with "
+                               "keyframe_times for a storyboard."}),
                 "end_image": ("IMAGE", {
-                    "tooltip": "Nur i2v: wenn gesetzt, gelten images=Start und "
-                               "end_image=Ende (genau 2 Keyframes)."}),
+                    "tooltip": "i2v only: when set, images is the start and end_image the end, "
+                               "giving exactly 2 keyframes."}),
                 "keyframe_times": ("STRING", {
                     "default": "",
-                    "tooltip": "Nur i2v: Sekunden je Bild, kommagetrennt (z.B. '0, 4.5, 10'). "
-                               "Anzahl muss mit images übereinstimmen, Werte aufsteigend. "
-                               "Bilder werden zu Frames an diesen Sekunden."}),
+                    "tooltip": "i2v only: seconds per image, comma separated (e.g. '0, 4.5, 10'). "
+                               "The count must match images and the values must ascend. Each image "
+                               "becomes a frame at that second."}),
                 "video": ("VIDEO", {
-                    "tooltip": "Nur v2v: der Clip, der fortgesetzt wird (mp4)."}),
+                    "tooltip": "v2v only: the clip to continue (mp4)."}),
                 "draft_cache": ("STRING", {
                     "default": "",
-                    "tooltip": "Nur draft_enhance: base64-Bundle oder URL aus dem "
-                               "draft-Output eines vorherigen Laufs. Pflicht für diesen Modus."}),
+                    "tooltip": "draft_enhance only: the base64 bundle or URL from the draft output "
+                               "of an earlier run. Required in this mode."}),
                 "timeout_minutes": ("INT", {
                     "default": DEFAULT_TIMEOUT_MINUTES, "min": 1, "max": 240,
-                    "tooltip": "Wie lange die Node auf das Ergebnis wartet. Bei voller "
-                               "BFL-Warteschlange dauert ein Job schnell 20+ Minuten. "
-                               "Läuft die Zeit ab, bricht nur die Node ab — der Job läuft "
-                               "serverseitig weiter (und kostet trotzdem Credits)."}),
-                "api_key": ("STRING", {"default": "", "tooltip": "Leer = aus .env"}),
+                    "tooltip": "How long the node waits for the result. With a busy BFL queue a "
+                               "job easily takes 20+ minutes. When the time runs out only the node "
+                               "stops; the job keeps running server-side and still costs credits."}),
+                "api_key": ("STRING", {"default": "", "tooltip": "Leave empty to read it from "
+                                                                 ".env"}),
             },
         }
 
@@ -231,15 +231,15 @@ class Flux3Video:
                        timeout_minutes=DEFAULT_TIMEOUT_MINUTES, api_key=""):
         if mode not in VIDEO_MODES:
             raise ValueError(
-                f"Flux3: Modus '{mode}' nicht unterstützt. Erlaubt: {', '.join(VIDEO_MODES)}.")
+                f"Flux3: mode '{mode}' is not supported. Allowed: {', '.join(VIDEO_MODES)}.")
 
         # --- draft_enhance: only mode, draft_cache, safety_tolerance are accepted.
         if mode == "draft_enhance":
             cache = draft_cache.strip()
             if not cache:
                 raise ValueError(
-                    "Flux3: draft_enhance braucht draft_cache (base64-Bundle oder URL "
-                    "aus einem vorherigen draft-Lauf)."
+                    "Flux3: draft_enhance needs draft_cache, a base64 bundle or URL from an "
+                    "earlier draft run."
                 )
             payload = {
                 "mode": "draft_enhance",
@@ -262,33 +262,33 @@ class Flux3Video:
                 ("version", version.strip() not in ("", "latest")),
             ) if used]
             if ignored:
-                log.warning("Flux3: draft_enhance akzeptiert nur draft_cache + safety_tolerance. "
-                            "Diese Inputs werden ignoriert: %s", ", ".join(ignored))
+                log.warning("Flux3: draft_enhance only accepts draft_cache + safety_tolerance. "
+                            "These inputs are ignored: %s", ", ".join(ignored))
         else:
             if not prompt.strip():
-                raise ValueError("Flux3: prompt darf nicht leer sein.")
+                raise ValueError("Flux3: prompt must not be empty.")
 
             payload: dict = {"mode": mode, "prompt": prompt.strip()}
 
             if aspect_ratio not in ASPECT_RATIOS:
                 raise ValueError(
-                    f"Flux3: aspect_ratio '{aspect_ratio}' nicht unterstützt. "
-                    f"Erlaubt: {', '.join(ASPECT_RATIOS)}."
+                    f"Flux3: aspect_ratio '{aspect_ratio}' is not supported. "
+                    f"Allowed: {', '.join(ASPECT_RATIOS)}."
                 )
             payload["aspect_ratio"] = aspect_ratio
 
             # duration: "auto" oder int 5..20
             if duration not in DURATIONS:
                 raise ValueError(
-                    f"Flux3: duration '{duration}' nicht unterstützt. "
-                    f"Erlaubt: auto oder ganze Sekunden 5–20."
+                    f"Flux3: duration '{duration}' is not supported. "
+                    f"Allowed: auto, or whole seconds 5-20."
                 )
             payload["duration"] = duration if duration == "auto" else int(duration)
 
             if resolution not in RESOLUTIONS:
                 raise ValueError(
-                    f"Flux3: resolution '{resolution}' nicht unterstützt. "
-                    f"Erlaubt: {', '.join(RESOLUTIONS)}."
+                    f"Flux3: resolution '{resolution}' is not supported. "
+                    f"Allowed: {', '.join(RESOLUTIONS)}."
                 )
             payload["resolution"] = resolution
 
@@ -296,8 +296,8 @@ class Flux3Video:
 
             if not (SAFETY_TOLERANCE_MIN <= safety_tolerance <= SAFETY_TOLERANCE_MAX):
                 raise ValueError(
-                    f"Flux3: safety_tolerance muss {SAFETY_TOLERANCE_MIN}..{SAFETY_TOLERANCE_MAX} "
-                    f"sein, bekommen: {safety_tolerance}."
+                    f"Flux3: safety_tolerance must be "
+                    f"{SAFETY_TOLERANCE_MIN}..{SAFETY_TOLERANCE_MAX}, got: {safety_tolerance}."
                 )
             payload["safety_tolerance"] = int(safety_tolerance)
 
@@ -316,7 +316,7 @@ class Flux3Video:
 
             elif mode == "v2v":
                 if video is None:
-                    raise ValueError("Flux3: v2v braucht einen video-Input (start_video).")
+                    raise ValueError("Flux3: v2v needs a video input (start_video).")
                 payload["start_video"] = await asyncio.to_thread(video_to_base64, video)
 
             # t2v: no extra conditioning field.
@@ -353,50 +353,47 @@ class Flux3VideoUpscale:
         return {
             "required": {
                 "video": ("VIDEO", {
-                    "tooltip": "Der Clip, der upgescalet wird (mp4). Max "
-                               f"{UPSCALE_VIDEO_MAX_SECONDS} s und "
-                               f"{UPSCALE_VIDEO_MAX_MB} MB. Alternativ "
-                               "input_video_url verwenden."}),
+                    "tooltip": "The clip to upscale (mp4). Max "
+                               f"{UPSCALE_VIDEO_MAX_SECONDS} s and "
+                               f"{UPSCALE_VIDEO_MAX_MB} MB. Or use "
+                               "input_video_url instead."}),
                 "target_resolution": (UPSCALE_TARGETS, {
                     "default": "4K",
-                    "tooltip": "Ziel-Auflösung (Short Side). Die Node misst die "
-                               "Source-Dimension und berechnet den upscale_factor "
-                               "daraus (Faktor = target_short / min(w, h), "
-                               "auf 1.5–3.0 begrenzt). Erhält das Seitenverhältnis "
-                               "der Quelle. 1080p ≈ 1920×1080, 2K ≈ 2560×1440, "
-                               "4K ≈ 3840×2160 (jeweils 16:9)."}),
+                    "tooltip": "Target resolution on the short side. The node measures the source "
+                               "and derives upscale_factor from it (factor = target_short / min(w, "
+                               "h), clamped to 1.5-3.0), keeping the source aspect ratio. 1080p is "
+                               "about 1920x1080, 2K about 2560x1440, 4K about 3840x2160, each at "
+                               "16:9."}),
                 "creativity": (UPSCALE_CREATIVITY_MODES, {
                     "default": "creative",
-                    "tooltip": "precise (0) = identitätserhaltend, scharf — für "
-                               "Gesichter/Produkte/echte Menschen. "
-                               "creative (1, default) = erfindet Detail, gut für "
-                               "generierte Footage/Landschaften/Texturen; "
-                               "Gesichter/Produkte können driften."}),
+                    "tooltip": "precise (0) preserves identity and stays sharp, for faces, "
+                               "products and real people. creative (1, default) invents detail, "
+                               "good for generated footage, landscapes and textures, but faces and "
+                               "products may drift."}),
             },
             "optional": {
                 "input_video_url": ("STRING", {
                     "default": "",
-                    "tooltip": "Alternative: HTTP(S)-URL zur Quelle statt "
-                               "video-Input. Hat Vorrang vor dem video-Input; "
-                               "erspart das Base64-Encoding eines großen Clips. "
-                               "Die Node streamt nur den moov-Atom der URL, um "
-                               "die Source-Dimension zu messen — kein Full-Download."}),
+                    "tooltip": "Alternative to the video input: an HTTP(S) URL to the source. It "
+                               "takes precedence over the video input and avoids base64 encoding a "
+                               "large clip. The node only streams the moov atom of the URL to "
+                               "measure the source dimensions, so there is no full download."}),
                 "prompt": ("STRING", {
                     "multiline": True, "default": "",
-                    "tooltip": "Optional Beschreibung des Clips, lenkt das "
-                               "enhanced Detail (vor allem im creative-Modus). "
-                               "Leer = neutraler Upscale."}),
+                    "tooltip": "Optional description of the clip. It steers the "
+                               "enhanced detail, above all in creative mode. "
+                               "Leave empty for a neutral upscale."}),
                 "safety_tolerance": ("INT", {
                     "default": SAFETY_TOLERANCE_DEFAULT,
                     "min": SAFETY_TOLERANCE_MIN, "max": SAFETY_TOLERANCE_MAX,
-                    "tooltip": "0 (strengste) bis 4, Default 2. Moderation für "
-                               "Prompt und ausgelieferte Frames."}),
+                    "tooltip": "0 (strictest) to 4, default 2. Moderates the prompt and the "
+                               "delivered frames."}),
                 "timeout_minutes": ("INT", {
                     "default": DEFAULT_TIMEOUT_MINUTES, "min": 1, "max": 240,
-                    "tooltip": "Wie lange die Node auf das Ergebnis wartet. "
-                               "Upscale kann ähnlich lange wie eine Video-"
-                               "Generierung brauchen."}),
-                "api_key": ("STRING", {"default": "", "tooltip": "Leer = aus .env"}),
+                    "tooltip": "How long the node waits for the result. An upscale can take about "
+                               "as long as generating a video."}),
+                "api_key": ("STRING", {"default": "", "tooltip": "Leave empty to read it from "
+                                                                 ".env"}),
             },
         }
 
@@ -418,7 +415,7 @@ class Flux3VideoUpscale:
             for stream in container.streams:
                 if stream.type == "video":
                     return int(stream.width), int(stream.height)
-        raise ValueError(f"Flux3: kein Video-Stream in {url}")
+        raise ValueError(f"Flux3: no video stream in {url}")
 
     async def generate(self, video, target_resolution, creativity,
                        input_video_url="", prompt="",
@@ -426,8 +423,8 @@ class Flux3VideoUpscale:
                        timeout_minutes=DEFAULT_TIMEOUT_MINUTES, api_key=""):
         if target_resolution not in UPSCALE_TARGET_SHORT_SIDE:
             raise ValueError(
-                f"Flux3: target_resolution '{target_resolution}' nicht unterstützt. "
-                f"Erlaubt: {', '.join(UPSCALE_TARGETS)}."
+                f"Flux3: target_resolution '{target_resolution}' is not supported. "
+                f"Allowed: {', '.join(UPSCALE_TARGETS)}."
             )
         target_short = UPSCALE_TARGET_SHORT_SIDE[target_resolution]
 
@@ -436,7 +433,7 @@ class Flux3VideoUpscale:
         if url:
             if not url.startswith("http"):
                 raise ValueError(
-                    "Flux3: input_video_url muss eine HTTP(S)-URL sein."
+                    "Flux3: input_video_url must be an HTTP(S) URL."
                 )
             src_w, src_h = await asyncio.to_thread(
                 self._probe_url_dimensions, url)
@@ -444,8 +441,7 @@ class Flux3VideoUpscale:
         else:
             if video is None:
                 raise ValueError(
-                    "Flux3: upscale braucht entweder den video-Input oder "
-                    "input_video_url."
+                    "Flux3: upscale needs either the video input or input_video_url."
                 )
             src_w, src_h = video.get_dimensions()
             input_video = await asyncio.to_thread(video_to_base64, video)
@@ -455,18 +451,17 @@ class Flux3VideoUpscale:
         factor = target_short / source_short
         if factor < UPSCALE_FACTOR_MIN:
             raise ValueError(
-                f"Flux3: Source ist {src_w}x{src_h} (short side {source_short}px) "
-                f"und damit bereits ≥ {target_resolution} (short side "
-                f"{target_short}px). Hochskalieren ergäbe Faktor "
-                f"{factor:.2f} < min {UPSCALE_FACTOR_MIN} — nichts zu upscaling. "
-                f"Wähle ein höheres target_resolution (z.B. 4K) oder eine "
-                f"kleinere Quelle."
+                f"Flux3: the source is {src_w}x{src_h} (short side {source_short}px) "
+                f"and therefore already at or above {target_resolution} (short side "
+                f"{target_short}px). Upscaling would give a factor of "
+                f"{factor:.2f} < min {UPSCALE_FACTOR_MIN}, so there is nothing to upscale. "
+                f"Pick a higher target_resolution (e.g. 4K) or a "
+                f"smaller source."
             )
         if factor > UPSCALE_FACTOR_MAX:
             log.warning(
-                "Flux3: %s aus Source %dx%d (short %d) nicht erreichbar "
-                "(Faktor wäre %.2f, max %.1f). Upcaling mit %.1fx — effektive "
-                "Short Side ~%dpx.",
+                "Flux3: %s is not reachable from a %dx%d source (short side %d) - the factor would "
+                "be %.2f, max %.1f. Upscaling with %.1fx instead, effective short side ~%dpx.",
                 target_resolution, src_w, src_h, source_short,
                 factor, UPSCALE_FACTOR_MAX, UPSCALE_FACTOR_MAX,
                 int(source_short * UPSCALE_FACTOR_MAX),
@@ -475,15 +470,15 @@ class Flux3VideoUpscale:
 
         if creativity not in UPSCALE_CREATIVITY_MODES:
             raise ValueError(
-                f"Flux3: creativity '{creativity}' nicht unterstützt. "
-                f"Erlaubt: {', '.join(UPSCALE_CREATIVITY_MODES)}."
+                f"Flux3: creativity '{creativity}' is not supported. "
+                f"Allowed: {', '.join(UPSCALE_CREATIVITY_MODES)}."
             )
         creativity_val = 1 if creativity == "creative" else 0
 
         if not (SAFETY_TOLERANCE_MIN <= safety_tolerance <= SAFETY_TOLERANCE_MAX):
             raise ValueError(
-                f"Flux3: safety_tolerance muss {SAFETY_TOLERANCE_MIN}..{SAFETY_TOLERANCE_MAX} "
-                f"sein, bekommen: {safety_tolerance}."
+                f"Flux3: safety_tolerance must be {SAFETY_TOLERANCE_MIN}..{SAFETY_TOLERANCE_MAX}, "
+                f"got: {safety_tolerance}."
             )
 
         payload: dict = {
@@ -547,7 +542,7 @@ def _load_skill(name: str) -> str:
         return ""
     path = os.path.join(_SKILLS_DIR, f"{name}.md")
     if not os.path.isfile(path):
-        raise FileNotFoundError(f"Flux3Prompt: skill '{name}' nicht gefunden in {_SKILLS_DIR}.")
+        raise FileNotFoundError(f"Flux3Prompt: skill '{name}' not found in {_SKILLS_DIR}.")
     with open(path, "r", encoding="utf-8-sig") as fh:
         return fh.read().strip()
 
@@ -572,9 +567,9 @@ class Flux3Prompter:
                                "turns it into a structured FLUX 3 prompt."}),
                 "model": (_model_dropdown(), {
                     "default": OR_DEFAULT_MODEL,
-                    "tooltip": "OpenRouter model slug. List wird live von der "
-                               "OpenRouter-API geladen (text-only Modelle). Refresh "
-                               "ComfyUI, um neu hinzugekommene Modelle zu sehen."}),
+                    "tooltip": "OpenRouter model slug. The list is loaded live from the OpenRouter "
+                               "API (text-only models). Refresh ComfyUI to pick up newly added "
+                               "models."}),
                 "skill": (_list_skills(), {
                     "default": "none",
                     "tooltip": "Prompting skill that steers the LLM. 'none' = freeform. "
@@ -590,12 +585,12 @@ class Flux3Prompter:
                                "alongside your idea; describe it in the idea text."}),
                 "model_custom": ("STRING", {
                     "default": "",
-                    "tooltip": "Optional: beliebiger OpenRouter-Model-Slug, der nicht "
-                               "im Dropdown steht. Hat Vorrang vor dem model-Dropdown."}),
+                    "tooltip": "Optional: any OpenRouter model slug that is not in the dropdown. "
+                               "Takes precedence over the model dropdown."}),
                 "api_key": ("STRING", {
                     "default": "",
-                    "tooltip": "Leer = aus .env / Umgebungsvariable "
-                               "OPENROUTER_API_KEY."}),
+                    "tooltip": "Leave empty to read it from .env or the "
+                               "OPENROUTER_API_KEY environment variable."}),
                 "extra_instructions": ("STRING", {
                     "multiline": True, "default": "",
                     "tooltip": "Optional: extra directives appended to the skill "
@@ -609,7 +604,7 @@ class Flux3Prompter:
                     "tooltip": "Max output tokens."}),
                 "timeout_seconds": ("INT", {
                     "default": 120, "min": 10, "max": 600,
-                    "tooltip": "Wie lange die Node auf die LLM-Antwort wartet."}),
+                    "tooltip": "How long the node waits for the LLM response."}),
             },
         }
 
@@ -623,7 +618,7 @@ class Flux3Prompter:
                        temperature=0.7, max_tokens=4096, timeout_seconds=120,
                        images=None, **kwargs):
         if not idea.strip():
-            raise ValueError("Flux3Prompt: idea darf nicht leer sein.")
+            raise ValueError("Flux3Prompt: idea must not be empty.")
 
         key = get_openrouter_api_key(api_key)
 
@@ -635,8 +630,8 @@ class Flux3Prompter:
         image_blobs: list[str] | None = None
         if images is not None:
             if not is_vision_model(chosen):
-                log.warning("Flux3Prompt: model '%s' unterstützt vermutlich keine "
-                            "Bilder. Nutze ein Vision-Modell für Reference-Images.", chosen)
+                log.warning("Flux3Prompt: model '%s' probably does not support images. Use a vision "
+                            "model for reference images.", chosen)
             image_blobs = await asyncio.to_thread(
                 lambda imgs: [image_to_base64(im) for im in imgs], images)
             log.info("Flux3Prompt: %d reference image(s) attached.", len(image_blobs))
@@ -661,7 +656,8 @@ class Flux3Prompter:
 
         user = f"Video idea:\n{idea.strip()}"
 
-        log.info("Flux3Prompt: calling OpenRouter (model=%s, skill=%s, %.0f tokens max, images=%s)",
+        log.info("Flux3Prompt: calling OpenRouter (model=%s, skill=%s, %.0f tokens max, "
+                 "images=%s)",
                  chosen, skill, max_tokens, len(image_blobs) if image_blobs else 0)
 
         text = await asyncio.to_thread(

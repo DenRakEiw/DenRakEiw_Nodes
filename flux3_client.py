@@ -114,7 +114,7 @@ def _load_dotenv() -> dict:
                 key, val = line.split("=", 1)
                 values[key.strip()] = val.strip().strip('"').strip("'")
     except OSError as exc:
-        log.warning("Flux3: konnte .env nicht lesen: %s", exc)
+        log.warning("Flux3: could not read .env: %s", exc)
     return values
 
 
@@ -125,9 +125,8 @@ def get_api_key(override: str = "") -> str:
     key = env.get("BFL_API_KEY") or os.environ.get("BFL_API_KEY") or ""
     if not key:
         raise RuntimeError(
-            "Kein BFL API Key gefunden. Trage ihn in Flux_3_API/.env als "
-            "BFL_API_KEY=... ein, setze die Umgebungsvariable BFL_API_KEY, "
-            "oder fülle das api_key-Feld der Node."
+            "No BFL API key found. Add it to Flux_3_API/.env as BFL_API_KEY=..., set the "
+            "BFL_API_KEY environment variable, or fill in the api_key field on the node."
         )
     return key
 
@@ -199,7 +198,7 @@ def _parse_poll_response(resp, task_id: str) -> dict:
     if (400 <= resp.status_code < 500 and resp.status_code != 429
             and "status" not in data):
         raise RuntimeError(
-            f"Flux3: Polling von Task {task_id} abgelehnt (HTTP "
+            f"Flux3: polling task {task_id} was rejected (HTTP "
             f"{resp.status_code}): "
             f"{json.dumps(data, ensure_ascii=False)[:1000]}"
         )
@@ -240,7 +239,7 @@ class Flux3Client:
             if not ep:
                 raise ValueError(
                     f"Flux3: unbekanntes image model '{image_model}'. "
-                    f"Erlaubt: {', '.join(IMAGE_MODELS)}."
+                    f"Allowed: {', '.join(IMAGE_MODELS)}."
                 )
             path = f"v1/{ep['path']}"
             url = f"{self.base_url}/{path}"
@@ -257,18 +256,18 @@ class Flux3Client:
         resp = self.session.post(url, json=payload, timeout=300)
 
         if resp.status_code in (401, 403):
-            raise RuntimeError(f"Flux3: API-Key ungültig oder fehlt (HTTP {resp.status_code}).")
+            raise RuntimeError(f"Flux3: API key invalid or missing (HTTP {resp.status_code}).")
         if not resp.ok:
             # raise_for_status() would swallow the body - and the body is the whole point:
             # it says WHY the API refused (bad base64, payload too large, moderation, ...).
-            detail = resp.text[:1000] if resp.text else "(kein Fehlertext)"
+            detail = resp.text[:1000] if resp.text else "(no error text)"
             hint = ""
             if resp.status_code in (400, 413) and size_mb > 5:
-                hint = (f" Der Request war {size_mb:.1f} MB groß — vermutlich ist das "
-                        f"start_video/keyframes/input_image zu groß.")
+                hint = (f" The request was {size_mb:.1f} MB, so probably "
+                        f"start_video/keyframes/input_image is too large.")
             raise RuntimeError(
-                f"Flux3: API lehnt den Request ab (HTTP {resp.status_code}) "
-                f"für mode={payload.get('mode')}: {detail}{hint}"
+                f"Flux3: the API rejected the request (HTTP {resp.status_code}) "
+                f"for mode={payload.get('mode')}: {detail}{hint}"
             )
 
         data = resp.json()
@@ -291,14 +290,14 @@ class Flux3Client:
         resp = self.session.post(url, json=payload, timeout=300)
 
         if resp.status_code in (401, 403):
-            raise RuntimeError(f"Flux3: API-Key ungültig oder fehlt (HTTP {resp.status_code}).")
+            raise RuntimeError(f"Flux3: API key invalid or missing (HTTP {resp.status_code}).")
         if not resp.ok:
             # The body says WHY (bad base64, clip >20s, payload >50MB, moderation, ...).
-            detail = resp.text[:1000] if resp.text else "(kein Fehlertext)"
+            detail = resp.text[:1000] if resp.text else "(no error text)"
             hint = ""
             if resp.status_code in (400, 413) and size_mb > 5:
-                hint = (f" Der Request war {size_mb:.1f} MB groß — vermutlich ist "
-                        f"input_video zu groß (max {UPSCALE_VIDEO_MAX_MB} MB, "
+                hint = (f" The request was {size_mb:.1f} MB, so probably "
+                        f"input_video is too large (max {UPSCALE_VIDEO_MAX_MB} MB, "
                         f"{UPSCALE_VIDEO_MAX_SECONDS} s).")
             raise RuntimeError(
                 f"Flux3: API lehnt den Upscale-Request ab (HTTP {resp.status_code}): "
@@ -328,11 +327,11 @@ class Flux3Client:
             if status == STATUS_READY:
                 result = data.get("result")
                 if not result:
-                    raise RuntimeError(f"Flux3: Task fertig, aber ohne Ergebnis: {data}")
+                    raise RuntimeError(f"Flux3: task finished but returned no result: {data}")
                 return result
             if status in STATUS_FAILED:
                 raise RuntimeError(
-                    f"Flux3: Task fehlgeschlagen ({status}): {data.get('details')}"
+                    f"Flux3: task failed ({status}): {data.get('details')}"
                 )
             if time.monotonic() > deadline:
                 raise RuntimeError(
@@ -369,15 +368,16 @@ class Flux3Client:
                 net_errors += 1
                 if net_errors > MAX_POLL_ERRORS:
                     raise RuntimeError(
-                        f"Flux3: {net_errors} Netzwerkfehler in Folge beim Pollen von "
-                        f"{task_id}. Der Job läuft serverseitig weiter — Ergebnis später "
-                        f"abrufbar unter {polling_url} . Letzter Fehler: {exc}"
+                        f"Flux3: {net_errors} consecutive network errors while polling "
+                        f"{task_id}. The job keeps running server-side, the result will be "
+                        f"available at {polling_url} . Last error: {exc}"
                     ) from exc
                 if time.monotonic() > deadline:
                     raise RuntimeError(
-                        f"Flux3: Timeout beim Pollen von {task_id} nach Netzwerkfehler: {exc}"
+                        f"Flux3: timeout while polling {task_id} after a network error: {exc}"
                     ) from exc
-                log.warning("Flux3: Netzwerkfehler beim Pollen (%d/%d), neuer Versuch in %.0fs: %s",
+                log.warning("Flux3: network error while polling (%d/%d), retrying in %.0fs: "
+                            "%s",
                             net_errors, MAX_POLL_ERRORS, interval * 2, exc)
                 await asyncio.sleep(interval * 2)
                 continue
@@ -399,17 +399,17 @@ class Flux3Client:
             if status == STATUS_READY:
                 result = data.get("result")
                 if not result:
-                    raise RuntimeError(f"Flux3: Task fertig, aber ohne Ergebnis: {data}")
+                    raise RuntimeError(f"Flux3: task finished but returned no result: {data}")
                 return result
             if status in STATUS_FAILED:
                 raise RuntimeError(
-                    f"Flux3: Task fehlgeschlagen ({status}): {data.get('details')}"
+                    f"Flux3: task failed ({status}): {data.get('details')}"
                 )
             if time.monotonic() > deadline:
                 raise RuntimeError(
-                    f"Flux3: Timeout nach {timeout / 60:.0f} min (letzter Status: {status}). "
-                    f"Der Job läuft serverseitig weiter — Ergebnis abrufbar unter "
-                    f"{polling_url} . Für lange Warteschlangen timeout_minutes erhöhen."
+                    f"Flux3: timeout after {timeout / 60:.0f} min (last status: {status}). "
+                    f"The job keeps running server-side, the result is available at "
+                    f"{polling_url} . Raise timeout_minutes for long queues."
                 )
 
             # Back off on long waits: no point hammering the polling_url every 2s for 20 minutes.
@@ -428,10 +428,10 @@ class Flux3Client:
             except requests.RequestException as exc:
                 last = exc
                 wait = 2 ** attempt
-                log.warning("Flux3: Download fehlgeschlagen (Versuch %d/4), neuer Versuch in %ds: %s",
+                log.warning("Flux3: download failed (attempt %d/4), retrying in %ds: %s",
                             attempt + 1, wait, exc)
                 time.sleep(wait)
-        raise RuntimeError(f"Flux3: Download des Ergebnisses fehlgeschlagen: {last}") from last
+        raise RuntimeError(f"Flux3: downloading the result failed: {last}") from last
 
 
 # Payload keys whose values are base64 blobs - never dump those into the debug output.
@@ -491,13 +491,13 @@ def format_metadata(payload: dict, result: Any, task: dict,
             lines.append(f"{key:<15}: {task[key]}")
 
     lines.append("")
-    lines.append("--- REQUEST (an die API gesendet) ---")
+    lines.append("--- REQUEST (sent to the API) ---")
     for key, value in payload.items():
         shown = _describe_blob(value) if key in BLOB_KEYS else value
         lines.append(f"{key:<15}: {shown}")
 
     lines.append("")
-    lines.append("--- RESPONSE (von der API) ---")
+    lines.append("--- RESPONSE (from the API) ---")
     for key, value in result.items():
         lines.append(f"{key:<15}: {value}")
 
@@ -516,4 +516,4 @@ def extract_url(result: Any) -> str:
         for val in result.values():
             if isinstance(val, str) and val.startswith("http"):
                 return val
-    raise RuntimeError(f"Flux3: keine Ergebnis-URL gefunden in: {result}")
+    raise RuntimeError(f"Flux3: no result URL found in: {result}")

@@ -73,9 +73,9 @@ def get_api_key(override: str = "") -> str:
     key = env.get(ENV_KEY) or os.environ.get(ENV_KEY) or ""
     if not key:
         raise RuntimeError(
-            f"Flux3Prompt: kein OpenRouter API-Key. Trage ihn in .env als "
-            f"{ENV_KEY}=... ein, setze die Umgebungsvariable, oder fülle das "
-            f"api_key-Feld der Node."
+            f"Flux3Prompt: no OpenRouter API key. Add it to .env as "
+            f"{ENV_KEY}=..., set the environment variable, or fill in the "
+            f"api_key field on the node."
         )
     return key
 
