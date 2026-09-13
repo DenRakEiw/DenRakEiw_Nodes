@@ -113,6 +113,18 @@ except ImportError as e:
     FLUX3_DISPLAY = {}
     print(f"⚠ Flux 3 API nodes not available: {e}")
 
+# Import fal.ai API nodes (Cosmos 3 Super)
+try:
+    from .fal_cosmos_nodes import NODE_CLASS_MAPPINGS as FAL_MAPPINGS
+    from .fal_cosmos_nodes import NODE_DISPLAY_NAME_MAPPINGS as FAL_DISPLAY
+    FAL_AVAILABLE = True
+    print("✓ fal.ai API nodes (Cosmos 3 Super) loaded successfully")
+except ImportError as e:
+    FAL_AVAILABLE = False
+    FAL_MAPPINGS = {}
+    FAL_DISPLAY = {}
+    print(f"⚠ fal.ai API nodes not available: {e}")
+
 # Base node mappings - only add nodes that loaded successfully
 NODE_CLASS_MAPPINGS = {}
 NODE_DISPLAY_NAME_MAPPINGS = {}
@@ -207,6 +219,11 @@ if LLM_DEFORUM_AVAILABLE and LLMDeforumGenerator is not None:
 if FLUX3_AVAILABLE:
     NODE_CLASS_MAPPINGS.update(FLUX3_MAPPINGS)
     NODE_DISPLAY_NAME_MAPPINGS.update(FLUX3_DISPLAY)
+
+# Add fal.ai API nodes if available
+if FAL_AVAILABLE:
+    NODE_CLASS_MAPPINGS.update(FAL_MAPPINGS)
+    NODE_DISPLAY_NAME_MAPPINGS.update(FAL_DISPLAY)
 
 # Import ComfyGotchi *DRE (self-contained, no separate comfygotchi install needed)
 try:
