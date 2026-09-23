@@ -1,5 +1,7 @@
 import os
 
+import folder_paths
+
 
 class UTF8CaptionSaver:
     """
@@ -17,8 +19,8 @@ class UTF8CaptionSaver:
                     "placeholder": "Caption for AI training"
                 }),
                 "folder_path": ("STRING", {
-                    "default": "output/captions",
-                    "placeholder": "Folder path for caption files"
+                    "default": "captions",
+                    "placeholder": "Folder inside the output directory"
                 }),
                 "filename": ("STRING", {
                     "default": "caption",
@@ -40,6 +42,10 @@ class UTF8CaptionSaver:
         print(f"[UTF8CaptionSaver] Folder: {folder_path}")
         print(f"[UTF8CaptionSaver] Filename: {filename}")
 
+        output_dir = os.path.realpath(folder_paths.get_output_directory())
+        if os.path.isabs(folder_path) or os.path.splitdrive(folder_path)[0] or folder_path.startswith(("/", "\\")) or ".." in folder_path.replace("\\", "/").split("/"):
+            raise ValueError(f"folder_path must be a relative folder inside the output directory: {folder_path}")
+
         try:
             # Clean filename (remove invalid characters)
             clean_filename = filename.replace(" ", "_")
@@ -49,18 +55,13 @@ class UTF8CaptionSaver:
             # Create final filename (no timestamp for AI training)
             final_filename = f"{clean_filename}.txt"
             
-            # Create full path
-            if os.path.isabs(folder_path):
-                full_folder = folder_path
-            else:
-                full_folder = os.path.join("output", folder_path)
-            
-            # Create directory
+            full_folder = os.path.join(output_dir, folder_path)
+            file_path = os.path.realpath(os.path.join(full_folder, final_filename))
+            if os.path.commonpath([output_dir, file_path]) != output_dir:
+                raise ValueError(f"folder_path points outside the output directory: {folder_path}")
+
             os.makedirs(full_folder, exist_ok=True)
             print(f"[UTF8CaptionSaver] Created directory: {full_folder}")
-
-            # Full file path
-            file_path = os.path.join(full_folder, final_filename)
             print(f"[UTF8CaptionSaver] Full file path: {file_path}")
 
             # Write caption file with UTF-8 encoding (clean, no metadata)

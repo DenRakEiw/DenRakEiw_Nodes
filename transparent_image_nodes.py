@@ -56,7 +56,11 @@ class SaveTransparentImage:
                 output_dir = folder_paths.get_output_directory()
             else:
                 output_dir = "output"
-            
+            output_dir = os.path.realpath(output_dir)
+
+            if os.path.isabs(filename_prefix) or os.path.splitdrive(filename_prefix)[0] or filename_prefix.startswith(("/", "\\")) or ".." in filename_prefix.replace("\\", "/").split("/"):
+                raise ValueError(f"filename_prefix must stay inside the output directory: {filename_prefix}")
+
             os.makedirs(output_dir, exist_ok=True)
             
             # Handle different input formats
@@ -105,7 +109,9 @@ class SaveTransparentImage:
                 else:
                     filename = f"{filename_prefix}{timestamp}.png"
 
-                filepath = os.path.join(output_dir, filename)
+                filepath = os.path.realpath(os.path.join(output_dir, filename))
+                if os.path.commonpath([output_dir, filepath]) != output_dir:
+                    raise ValueError(f"filename_prefix points outside the output directory: {filename_prefix}")
 
                 # Prepare PNG info for metadata embedding
                 pnginfo = None
