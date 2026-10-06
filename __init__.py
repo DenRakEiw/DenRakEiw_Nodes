@@ -46,6 +46,13 @@ except ImportError as e:
     print(f"✗ UTF8CaptionSaver failed: {e}")
     UTF8CaptionSaver = None
 
+try:
+    from .instagram_downloader import InstagramVideoDownloader
+    print("✓ InstagramVideoDownloader loaded")
+except ImportError as e:
+    print(f"✗ InstagramVideoDownloader failed: {e} (pip install yt-dlp)")
+    InstagramVideoDownloader = None
+
 # Import Universal Latent Upscaler (custom DenRakEiw V2.0 upscaler)
 try:
     from .wan_nn_latent_upscaler import WanNNLatentUpscalerNode
@@ -160,6 +167,10 @@ if MultiImageAspectRatioComposer is not None:
 if UTF8CaptionSaver is not None:
     NODE_CLASS_MAPPINGS["UTF8CaptionSaver"] = UTF8CaptionSaver
     NODE_DISPLAY_NAME_MAPPINGS["UTF8CaptionSaver"] = "📝 UTF-8 Caption Saver"
+
+if InstagramVideoDownloader is not None:
+    NODE_CLASS_MAPPINGS["InstagramVideoDownloader_DRE"] = InstagramVideoDownloader
+    NODE_DISPLAY_NAME_MAPPINGS["InstagramVideoDownloader_DRE"] = "📥 Instagram Video Downloader *DRE"
 
 # Add Universal Latent Upscaler if available (custom DenRakEiw V2.0)
 if WAN_NN_AVAILABLE and WanNNLatentUpscalerNode is not None:
