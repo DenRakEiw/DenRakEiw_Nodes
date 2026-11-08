@@ -48,7 +48,7 @@ def load_flux23_rgba_vae(checkpoint_path: str, dtype_str: str = "auto") -> comfy
         "attn_resolutions": [],
         "dropout": 0.0,
         "batch_norm_latent": "bn.running_mean" in sd,
-        "fused_norm": "bn.running_mean" in sd,
+        "fused_norm": False,
     }
 
     dtype_map = {
