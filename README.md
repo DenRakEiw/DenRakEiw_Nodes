@@ -1,6 +1,6 @@
 # Denrakeiw Nodes
 
-Comprehensive ComfyUI custom nodes for **image generation**, **latent space manipulation**, **Flux LayerDiffuse transparency**, and **multi-image composition**.
+Comprehensive ComfyUI custom nodes for **image generation**, **latent space manipulation**, **Flux LayerDiffuse & Flux 2/3 RGBA transparency**, and **multi-image composition**.
 
 ## 🎨 Core Nodes
 
@@ -72,16 +72,16 @@ Neural network-based latent upscaling (custom DenRakEiw V2.0 auto-detecting 4ch/
 
 ---
 
-## 🔥 Flux LayerDiffuse (Transparent Images)
+## 🔥 Flux LayerDiffuse (Transparent Images – FLUX.1)
 
-Complete transparent image generation system for Flux models.
+Complete transparent image generation system for FLUX.1 models.
 
 ### Core Nodes:
 - **🔧 Standalone Loader**: Loads TransparentVAE.pth model
 - **🔍 Decoder (Simple)**: Converts latents to transparent RGBA images
 - **💾 Save Transparent**: Saves PNG with proper alpha channel
 - **👁️ Preview Transparent**: Multi-background preview (checkerboard/white/black)
-- **📊 Transparent Info**: Alpha channel analysis and statistics
+- **📊 Transparent Info**: Alpha channel analysis, statistics, and grayscale `alpha_preview` output
 
 ### Utility Nodes:
 - **🔍 Conditioning Inspector**: Verifies Flux tensor compatibility
@@ -96,6 +96,22 @@ Complete transparent image generation system for Flux models.
 4. **Transparent**: Standalone Loader + Decoder + Save/Preview
 
 **Example Prompts**: "transparent glass bottle", "crystal wine glass", "clear ice cube"
+
+---
+
+## ✨ Flux 2 / Flux 3 Image Klein – Native 4-Channel RGBA VAE (Transparent Images)
+
+Native 4-channel RGBA encoding & decoding for **FLUX.2 Klein** and **FLUX 3 Image Klein (5.6B)** using the 128-channel (`32` unpacked) `AutoencoderKLFlux2` RGBA VAE ([`trmz/flux2-klein-alpha`](https://huggingface.co/trmz/flux2-klein-alpha)).
+
+### Core Nodes (`flux_rgba_vae_nodes.py`):
+- **🔧 Flux 2/3 RGBA VAE Loader \*DRE**: Loads 4-channel `AutoencoderKLFlux2` checkpoints (`flux2_3_rgba_vae.safetensors`) with full `models/vae/` dropdown and optional auto-download from Hugging Face.
+- **🔍 Flux 2/3 RGBA VAE Decode \*DRE**: Decodes FLUX 2 / FLUX 3 128-channel latents directly into 4-channel `rgba_image` (`[B, H, W, 4]`), 3-channel `rgb_image`, and `alpha_mask` (`MASK`).
+- **📥 Flux 2/3 RGBA VAE Encode \*DRE**: Encodes RGBA images (or RGB + `MASK`) into FLUX 2 / FLUX 3 128-channel latents with optional Alpha-Bleed edge padding.
+
+### Example Workflow & LoRA Training:
+- **Workflow**: `workflows/Flux3_Klein_Transparent_RGBA.json`
+- **Dataset Builder**: `create_flux3_transparent_dataset.py`
+- **Standalone FLUX 3 Klein Transparent LoRA Trainer**: `train_flux3_transparent_lora.py`
 
 ---
 
@@ -186,5 +202,4 @@ Flux LayerDiffuse Decoder → Save Transparent Image
 
 ## 🙏 Acknowledgments
 
-Thanks to **[RedAIGC](https://github.com/RedAIGC)** (Flux LayerDiffuse), **[lllyasviel](https://github.com/lllyasviel)** (LayerDiffuse foundation), and **[lum3on](https://github.com/lum3on)** (support & inspiration).
-
+Thanks to **[RedAIGC](https://github.com/RedAIGC)** (Flux LayerDiffuse), **[lllyasviel](https://github.com/lllyasviel)** (LayerDiffuse foundation), **[Xavier Jara / trmz](https://huggingface.co/trmz/flux2-klein-alpha)** (AlphaVAE 4-channel `AutoencoderKLFlux2`), and **[lum3on](https://github.com/lum3on)** (support & inspiration).

@@ -383,24 +383,37 @@ class TransparentImageInfo:
             }
         }
 
-    RETURN_TYPES = ("STRING",)
-    RETURN_NAMES = ("info",)
+    RETURN_TYPES = ("STRING", "IMAGE")
+    RETURN_NAMES = ("info", "alpha_preview")
     FUNCTION = "analyze_transparent_images"
     CATEGORY = "denrakeiw/flux"
 
     def analyze_transparent_images(self, images):
         """
-        Analyze transparent images and provide information
+        Analyze transparent images and provide information + 3-channel alpha preview image
         """
         
         try:
-            # Handle different input formats
+            # Build 3-channel alpha preview tensor [B, H, W, 3] for PreviewImage
             if isinstance(images, torch.Tensor):
-                images_np = images.cpu().numpy()
+                img_t = images.detach().cpu().float()
             elif isinstance(images, np.ndarray):
-                images_np = images
+                img_t = torch.from_numpy(images).float()
             else:
-                return (f"Unsupported image type: {type(images)}",)
+                fallback = torch.zeros((1, 64, 64, 3), dtype=torch.float32)
+                return (f"Unsupported image type: {type(images)}", fallback)
+
+            if img_t.ndim == 3:
+                img_t = img_t.unsqueeze(0)
+            if img_t.max() > 1.0:
+                img_t = img_t / 255.0
+            if img_t.shape[-1] == 4:
+                alpha_ch = img_t[..., 3:4].clamp(0.0, 1.0)
+                alpha_preview = alpha_ch.repeat(1, 1, 1, 3)
+            else:
+                alpha_preview = torch.ones((img_t.shape[0], img_t.shape[1], img_t.shape[2], 3), dtype=torch.float32)
+
+            images_np = img_t.numpy()
             
             info_lines = ["=== Transparent Image Analysis ==="]
             
@@ -433,29 +446,30 @@ class TransparentImageInfo:
                     
                     # Check transparency
                     if alpha_min < 0.1:
-                        info_lines.append("  ✅ Has transparent pixels")
+                        info_lines.append("  [OK] Has transparent pixels")
                     else:
-                        info_lines.append("  ⚠ No transparent pixels found")
+                        info_lines.append("  [WARN] No transparent pixels found")
                     
                     if alpha_max > 0.9:
-                        info_lines.append("  ✅ Has opaque pixels")
+                        info_lines.append("  [OK] Has opaque pixels")
                     else:
-                        info_lines.append("  ⚠ No opaque pixels found")
+                        info_lines.append("  [WARN] No opaque pixels found")
                 
                 elif c == 3:
-                    info_lines.append("  ⚠ RGB only - no alpha channel")
+                    info_lines.append("  [WARN] RGB only - no alpha channel")
                 else:
-                    info_lines.append(f"  ❓ Unusual channel count: {c}")
+                    info_lines.append(f"  [?] Unusual channel count: {c}")
             
             info_text = "\n".join(info_lines)
             print(info_text)
             
-            return (info_text,)
+            return (info_text, alpha_preview)
             
         except Exception as e:
             error_info = f"Error analyzing transparent images: {str(e)}"
             print(error_info)
-            return (error_info,)
+            fallback = torch.zeros((1, 64, 64, 3), dtype=torch.float32)
+            return (error_info, fallback)
 
 
 # Node mappings for ComfyUI

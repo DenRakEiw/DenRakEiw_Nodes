@@ -98,6 +98,18 @@ except ImportError as e:
     print(f"⚠ Flux LayerDiffuse nodes not available: {e}")
     print("Install required dependencies: pip install diffusers==0.32.2 safetensors transformers peft")
 
+# Import Flux 2/3 RGBA VAE nodes (AlphaVAE)
+try:
+    from .flux_rgba_vae_nodes import NODE_CLASS_MAPPINGS as FLUX_RGBA_VAE_MAPPINGS
+    from .flux_rgba_vae_nodes import NODE_DISPLAY_NAME_MAPPINGS as FLUX_RGBA_VAE_DISPLAY
+    FLUX_RGBA_VAE_AVAILABLE = True
+    print("✓ Flux 2/3 RGBA VAE nodes loaded successfully")
+except ImportError as e:
+    FLUX_RGBA_VAE_AVAILABLE = False
+    FLUX_RGBA_VAE_MAPPINGS = {}
+    FLUX_RGBA_VAE_DISPLAY = {}
+    print(f"⚠ Flux 2/3 RGBA VAE nodes not available: {e}")
+
 # Import LLM Deforum Generator
 try:
     from .llm_deforum import LLMDeforumGenerator
@@ -220,6 +232,11 @@ if FLUX_LAYERDIFFUSE_AVAILABLE:
     if TransparentImageInfo is not None:
         NODE_CLASS_MAPPINGS["TransparentImageInfo"] = TransparentImageInfo
         NODE_DISPLAY_NAME_MAPPINGS["TransparentImageInfo"] = "📊 Transparent Image Info"
+
+# Add Flux 2/3 RGBA VAE nodes if available
+if FLUX_RGBA_VAE_AVAILABLE:
+    NODE_CLASS_MAPPINGS.update(FLUX_RGBA_VAE_MAPPINGS)
+    NODE_DISPLAY_NAME_MAPPINGS.update(FLUX_RGBA_VAE_DISPLAY)
 
 # Add LLM Deforum Generator if available
 if LLM_DEFORUM_AVAILABLE and LLMDeforumGenerator is not None:

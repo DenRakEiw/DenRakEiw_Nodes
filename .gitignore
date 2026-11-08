@@ -9,3 +9,5 @@ models/*
 plots/
 validation_output/
 wan_vae_models/
+datasets/
+comfygotchi_dre/state_dre.json
