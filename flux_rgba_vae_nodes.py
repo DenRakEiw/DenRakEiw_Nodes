@@ -21,6 +21,7 @@ except ImportError:
 HF_RGBA_VAE_URL = (
     "https://huggingface.co/trmz/flux2-klein-alpha/resolve/main/vae/diffusion_pytorch_model.safetensors"
 )
+ULTRA_RGBA_VAE_FILENAME = "flux3_ultra_rgba_vae.safetensors"
 DEFAULT_RGBA_VAE_FILENAME = "flux2_3_rgba_vae.safetensors"
 
 
@@ -102,11 +103,13 @@ class Flux23RGBAVAELoader:
     @classmethod
     def INPUT_TYPES(cls):
         vae_files = list(folder_paths.get_filename_list("vae"))
-        if DEFAULT_RGBA_VAE_FILENAME not in vae_files:
-            vae_files = [DEFAULT_RGBA_VAE_FILENAME] + vae_files
-        else:
-            # Put flux2_3_rgba_vae.safetensors first as default while keeping all VAEs in dropdown
-            vae_files = [DEFAULT_RGBA_VAE_FILENAME] + [f for f in vae_files if f != DEFAULT_RGBA_VAE_FILENAME]
+        preferred = []
+        for candidate in (ULTRA_RGBA_VAE_FILENAME, DEFAULT_RGBA_VAE_FILENAME):
+            if candidate in vae_files:
+                preferred.append(candidate)
+        if not preferred:
+            preferred.append(DEFAULT_RGBA_VAE_FILENAME)
+        vae_files = preferred + [f for f in vae_files if f not in preferred]
         return {
             "required": {
                 "vae_name": (vae_files,),
@@ -162,7 +165,11 @@ class Flux23RGBAVAEDecode:
             "required": {
                 "rgba_vae": ("VAE",),
                 "samples": ("LATENT",),
-            }
+            },
+            "optional": {
+                "tiled": ("BOOLEAN", {"default": False}),
+                "tile_size": ("INT", {"default": 1024, "min": 512, "max": 2048, "step": 256}),
+            },
         }
 
     RETURN_TYPES = ("IMAGE", "IMAGE", "MASK")
@@ -170,10 +177,19 @@ class Flux23RGBAVAEDecode:
     FUNCTION = "decode"
     CATEGORY = "denrakeiw/flux"
 
-    def decode(self, rgba_vae: comfy.sd.VAE, samples: dict):
+    def decode(self, rgba_vae: comfy.sd.VAE, samples: dict, tiled: bool = False, tile_size: int = 1024):
         latent = samples["samples"]
+        # Auto-enable 4-channel tiled decoding for high-res >= 1536px or if explicitly requested
+        h_px = latent.shape[-2] * 16
+        w_px = latent.shape[-1] * 16
+        use_tiled = tiled or (max(h_px, w_px) >= 1536)
         with torch.no_grad():
-            images = rgba_vae.decode(latent).detach()
+            if use_tiled:
+                c = rgba_vae.spacial_compression_decode()
+                t_lat = max(32, tile_size // c)
+                images = rgba_vae.decode_tiled(latent, tile_x=t_lat, tile_y=t_lat, overlap=max(8, t_lat // 4)).detach()
+            else:
+                images = rgba_vae.decode(latent).detach()
         if images.ndim == 5:
             images = images.reshape(-1, images.shape[-3], images.shape[-2], images.shape[-1])
         images = images.clamp(0.0, 1.0)
