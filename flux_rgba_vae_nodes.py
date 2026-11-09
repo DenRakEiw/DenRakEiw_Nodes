@@ -84,9 +84,11 @@ def load_flux23_rgba_vae(checkpoint_path: str, dtype_str: str = "auto") -> comfy
 if not getattr(comfy.sd.VAE, "_dre_rgba_vae_hooked", False):
     _orig_comfy_vae_init = comfy.sd.VAE.__init__
 
-    def _dre_patched_vae_init(self, sd=None, device=None, config=None, dtype=None, metadata=None, no_init=False):
+    def _dre_patched_vae_init(self, sd=None, device=None, config=None, dtype=None, metadata=None, no_init=False, **kwargs):
+        if no_init:
+            return
         is_4ch_flux_vae = False
-        if not no_init and config is None and sd is not None:
+        if config is None and sd is not None:
             conv_in_w = sd.get("encoder.conv_in.weight", None)
             conv_out_w = sd.get("decoder.conv_out.weight", None)
             if (
@@ -116,7 +118,7 @@ if not getattr(comfy.sd.VAE, "_dre_rgba_vae_hooked", False):
                 }
                 config = {"params": {"ddconfig": ddconfig, "embed_dim": z_channels}}
 
-        _orig_comfy_vae_init(self, sd=sd, device=device, config=config, dtype=dtype, metadata=metadata, no_init=no_init)
+        _orig_comfy_vae_init(self, sd=sd, device=device, config=config, dtype=dtype, metadata=metadata)
 
         if is_4ch_flux_vae:
             z_ch = config["params"]["embed_dim"]
