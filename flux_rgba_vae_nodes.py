@@ -77,6 +77,60 @@ def load_flux23_rgba_vae(checkpoint_path: str, dtype_str: str = "auto") -> comfy
     return vae
 
 
+# ----------------------------------------------------------------------------
+# Hook vanilla ComfyUI `comfy.sd.VAE.__init__` so the built-in `VAELoader` node
+# can also load 4-channel RGBA AutoencoderKLFlux2 VAEs without size mismatch!
+# ----------------------------------------------------------------------------
+if not getattr(comfy.sd.VAE, "_dre_rgba_vae_hooked", False):
+    _orig_comfy_vae_init = comfy.sd.VAE.__init__
+
+    def _dre_patched_vae_init(self, sd=None, device=None, config=None, dtype=None, metadata=None, no_init=False):
+        is_4ch_flux_vae = False
+        if not no_init and config is None and sd is not None:
+            conv_in_w = sd.get("encoder.conv_in.weight", None)
+            conv_out_w = sd.get("decoder.conv_out.weight", None)
+            if (
+                conv_in_w is not None
+                and conv_out_w is not None
+                and conv_in_w.ndim == 4
+                and (conv_in_w.shape[1] == 4 or conv_out_w.shape[0] == 4)
+                and "bn.running_mean" in sd
+            ):
+                is_4ch_flux_vae = True
+                in_channels = int(conv_in_w.shape[1])
+                out_ch = int(conv_out_w.shape[0])
+                z_channels = int(sd["decoder.conv_in.weight"].shape[1]) if "decoder.conv_in.weight" in sd else 32
+                ddconfig = {
+                    "double_z": True,
+                    "z_channels": z_channels,
+                    "resolution": 256,
+                    "in_channels": in_channels,
+                    "out_ch": out_ch,
+                    "ch": 128,
+                    "ch_mult": [1, 2, 4, 4],
+                    "num_res_blocks": 2,
+                    "attn_resolutions": [],
+                    "dropout": 0.0,
+                    "batch_norm_latent": True,
+                    "fused_norm": False,
+                }
+                config = {"params": {"ddconfig": ddconfig, "embed_dim": z_channels}}
+
+        _orig_comfy_vae_init(self, sd=sd, device=device, config=config, dtype=dtype, metadata=metadata, no_init=no_init)
+
+        if is_4ch_flux_vae:
+            z_ch = config["params"]["embed_dim"]
+            self.downscale_ratio = 16
+            self.upscale_ratio = 16
+            self.latent_channels = z_ch * 4
+            self.output_channels = config["params"]["ddconfig"]["out_ch"]
+            self.pad_channel_value = 1.0
+            self.working_dtypes = [torch.float16, torch.bfloat16, torch.float32]
+
+    comfy.sd.VAE.__init__ = _dre_patched_vae_init
+    comfy.sd.VAE._dre_rgba_vae_hooked = True
+
+
 def apply_alpha_bleed_batch(rgba_tensor: torch.Tensor) -> torch.Tensor:
     """Fill RGB values under transparent pixels using pyramid alpha bleeding (pad_rgb)
     so zero/black transparent backgrounds do not cause dark edge halos during VAE encoding.
